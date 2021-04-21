@@ -9,72 +9,87 @@
 
 <url>
   <loc>https://pandukonala.github.io/</loc>
-  <lastmod>2021-04-19T19:33:41+00:00</lastmod>
+  <lastmod>2021-04-20T19:58:41+00:00</lastmod>
   <priority>1.00</priority>
 </url>
 <url>
   <loc>https://pandukonala.github.io/index.html</loc>
-  <lastmod>2021-04-19T19:33:41+00:00</lastmod>
+  <lastmod>2021-04-20T19:58:41+00:00</lastmod>
   <priority>0.80</priority>
 </url>
 <url>
   <loc>https://pandukonala.github.io/writing.html</loc>
-  <lastmod>2021-04-19T19:33:41+00:00</lastmod>
-  <priority>0.80</priority>
-</url>
-<url>
-  <loc>https://pandukonala.github.io/about.html</loc>
-  <lastmod>2021-04-19T19:33:41+00:00</lastmod>
+  <lastmod>2021-04-20T19:58:41+00:00</lastmod>
   <priority>0.80</priority>
 </url>
 <url>
   <loc>https://pandukonala.github.io/projects.html</loc>
-  <lastmod>2021-04-19T19:33:41+00:00</lastmod>
+  <lastmod>2021-04-20T19:58:41+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://pandukonala.github.io/about.html</loc>
+  <lastmod>2021-04-20T19:58:41+00:00</lastmod>
   <priority>0.80</priority>
 </url>
 <url>
   <loc>https://pandukonala.github.io/blog-work/patent_ipfs/patent_ipfs.html</loc>
-  <lastmod>2021-04-19T19:33:41+00:00</lastmod>
+  <lastmod>2021-04-20T19:58:41+00:00</lastmod>
   <priority>0.64</priority>
 </url>
 <url>
   <loc>https://pandukonala.github.io/blog-work/patent_radio/patent_radio.html</loc>
-  <lastmod>2021-04-19T19:33:41+00:00</lastmod>
+  <lastmod>2021-04-20T19:58:41+00:00</lastmod>
   <priority>0.64</priority>
 </url>
 <url>
   <loc>https://pandukonala.github.io/blog-work/paper_ipfs/paper_ipfs.html</loc>
-  <lastmod>2021-04-19T19:33:41+00:00</lastmod>
+  <lastmod>2021-04-20T19:58:41+00:00</lastmod>
   <priority>0.64</priority>
 </url>
 <url>
   <loc>https://pandukonala.github.io/blog-work/paper_cloud/paper_cloud.html</loc>
-  <lastmod>2021-04-19T19:33:41+00:00</lastmod>
-  <priority>0.64</priority>
-</url>
-<url>
-  <loc>https://pandukonala.github.io/assets/files/CV_Konala%20Pandu_2021.pdf</loc>
-  <lastmod>2021-04-19T19:33:41+00:00</lastmod>
+  <lastmod>2021-04-20T19:58:41+00:00</lastmod>
   <priority>0.64</priority>
 </url>
 <url>
   <loc>https://pandukonala.github.io/blog-projects/quantum/quantum.html</loc>
-  <lastmod>2021-04-19T19:33:41+00:00</lastmod>
+  <lastmod>2021-04-20T19:58:41+00:00</lastmod>
   <priority>0.64</priority>
 </url>
 <url>
   <loc>https://pandukonala.github.io/blog-projects/ipfs_iot/ipfs_iot.html</loc>
-  <lastmod>2021-04-19T19:33:41+00:00</lastmod>
+  <lastmod>2021-04-20T19:58:41+00:00</lastmod>
   <priority>0.64</priority>
 </url>
 <url>
   <loc>https://pandukonala.github.io/blog-projects/lpg_iot/lpg_iot.html</loc>
-  <lastmod>2021-04-19T19:33:41+00:00</lastmod>
+  <lastmod>2021-04-20T19:58:41+00:00</lastmod>
   <priority>0.64</priority>
 </url>
 <url>
   <loc>https://pandukonala.github.io/blog-projects/crop/crop.html</loc>
-  <lastmod>2021-04-19T19:33:41+00:00</lastmod>
+  <lastmod>2021-04-20T19:58:41+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://pandukonala.github.io/blog-projects/solar_data/solar_data.html</loc>
+  <lastmod>2021-04-20T19:58:41+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://pandukonala.github.io/blog-projects/triam/triam.html</loc>
+  <lastmod>2021-04-20T19:58:41+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://pandukonala.github.io/blog-projects/blackbird/blackbird.html</loc>
+  <lastmod>2021-04-20T19:58:41+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://pandukonala.github.io/assets/files/CV_Konala%20Pandu_2021.pdf</loc>
+  <lastmod>2021-04-20T19:58:41+00:00</lastmod>
   <priority>0.64</priority>
 </url>
 
