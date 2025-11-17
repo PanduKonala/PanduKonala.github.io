@@ -104,6 +104,9 @@
     const parser = new DOMParser();
     const newDoc = parser.parseFromString(html, 'text/html');
 
+    // Update URL in browser history FIRST (so relative paths resolve correctly)
+    window.history.pushState({ url: url }, '', url);
+
     // Update page title
     document.title = newDoc.title;
 
@@ -126,6 +129,14 @@
     if (currentHeader && newHeader) {
       currentHeader.className = newHeader.className;
       currentHeader.innerHTML = newHeader.innerHTML;
+
+      // Force logo image to reload with correct path
+      const logoImg = currentHeader.querySelector('.logo');
+      if (logoImg) {
+        const originalSrc = logoImg.getAttribute('src');
+        logoImg.src = '';
+        logoImg.src = originalSrc;
+      }
     }
 
     // Update nav if it exists
@@ -141,9 +152,6 @@
     } else if (currentNav && newNav) {
       currentNav.outerHTML = newNav.outerHTML;
     }
-
-    // Update URL in browser history
-    window.history.pushState({ url: url }, '', url);
 
     // Scroll to top
     window.scrollTo(0, 0);
@@ -218,6 +226,14 @@
           if (currentHeader && newHeader) {
             currentHeader.className = newHeader.className;
             currentHeader.innerHTML = newHeader.innerHTML;
+
+            // Force logo image to reload with correct path
+            const logoImg = currentHeader.querySelector('.logo');
+            if (logoImg) {
+              const originalSrc = logoImg.getAttribute('src');
+              logoImg.src = '';
+              logoImg.src = originalSrc;
+            }
           }
 
           const currentNav = document.querySelector('nav');

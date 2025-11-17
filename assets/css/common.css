@@ -795,8 +795,18 @@ header {
 
 /* Mobile adjustments for grid-page timeline */
 @media screen and (max-width: 768px) {
+  .grid-page {
+    height: auto;
+    min-height: 100vh;
+    overflow: visible;
+    padding-bottom: 3rem;
+  }
+
   .grid-page .timeline-container {
     padding: 1rem 1rem 1rem 2rem;
+    max-height: none;
+    overflow-y: visible;
+    -webkit-overflow-scrolling: touch;
   }
 
   .grid-page .timeline-container::before {
