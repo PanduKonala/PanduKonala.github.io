@@ -1,1 +1,0 @@
-const cursor=document.querySelector(".cursor");var timeout;document.addEventListener("mousemove",e=>{var o=e.pageX,e=e.pageY;cursor.style.top=e+"px",cursor.style.left=o+"px",cursor.style.display="block"}),document.addEventListener("mouseout",()=>{cursor.style.display="none"});

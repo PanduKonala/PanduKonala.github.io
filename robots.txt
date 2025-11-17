@@ -1,0 +1,132 @@
+# robots.txt for pandukonala.github.io
+# Author: Pandu Ranga Reddy Konala
+
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: https://pandukonala.github.io/sitemap.xml
+
+# Allow all search engines to index
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: Slurp
+Allow: /
+
+User-agent: DuckDuckBot
+Allow: /
+
+# AI Crawlers - OpenAI
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+# AI Crawlers - Google
+User-agent: Google-Extended
+Allow: /
+
+# AI Crawlers - Anthropic
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+# AI Crawlers - Perplexity
+User-agent: PerplexityBot
+Allow: /
+
+# AI Crawlers - Meta/Facebook
+User-agent: Meta-ExternalAgent
+Allow: /
+
+User-agent: Meta-ExternalFetcher
+Allow: /
+
+User-agent: FacebookBot
+Allow: /
+
+# AI Crawlers - Microsoft/Bing
+User-agent: bingbot
+Allow: /
+
+# AI Crawlers - Apple
+User-agent: Applebot-Extended
+Allow: /
+
+# AI Crawlers - Amazon
+User-agent: Amazonbot
+Allow: /
+
+# AI Crawlers - Cohere
+User-agent: cohere-ai
+Allow: /
+
+# AI Crawlers - You.com
+User-agent: YouBot
+Allow: /
+
+# AI Crawlers - Common Crawl (used by many AI)
+User-agent: CCBot
+Allow: /
+
+# AI Crawlers - Allen Institute for AI
+User-agent: AI2Bot
+Allow: /
+
+User-agent: Ai2Bot-Dolma
+Allow: /
+
+# AI Crawlers - Hugging Face
+User-agent: iaskspider
+Allow: /
+
+# AI Crawlers - Chinese AI Companies
+User-agent: Bytespider
+Allow: /
+
+User-agent: PetalBot
+Allow: /
+
+User-agent: Sogou
+Allow: /
+
+User-agent: Yisou
+Allow: /
+
+User-agent: Baiduspider
+Allow: /
+
+# AI Crawlers - Other AI Services
+User-agent: Diffbot
+Allow: /
+
+User-agent: omgili
+Allow: /
+
+User-agent: Timpibot
+Allow: /
+
+User-agent: VelenPublicWebCrawler
+Allow: /
+
+User-agent: Webzio-Extended
+Allow: /
+
+User-agent: img2dataset
+Allow: /
+
+# Disallow non-essential files
+Disallow: /google*.html
