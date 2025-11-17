@@ -237,27 +237,30 @@ header {
 
 .hero-compact {
   height: 100vh;
+  max-height: 100vh;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   align-items: center;
   text-align: center;
   padding: 2rem;
-  padding-top: 8rem;
-  padding-bottom: 2rem;
+  padding-top: clamp(4rem, 8vh, 8rem);
+  padding-bottom: clamp(1rem, 2vh, 2rem);
   overflow: hidden;
+  box-sizing: border-box;
 }
 
 .hero-heading {
-  margin-top: 2rem;
+  margin-top: clamp(0.5rem, 2vh, 2rem);
+  flex-shrink: 0;
 }
 
 .hero-title-compact {
-  font-size: 6rem;
+  font-size: clamp(2.8rem, 6vw, 6rem);
   font-family: futura_b;
   color: #ffffff;
-  margin-bottom: 1rem;
-  margin-top: 9rem;
+  margin-bottom: clamp(0.5rem, 1vh, 1rem);
+  margin-top: clamp(2rem, 9vh, 9rem);
   letter-spacing: 0.15em;
   animation: subtleFade 3s ease-in-out infinite alternate;
   text-shadow:
@@ -288,9 +291,9 @@ header {
 }
 
 .hero-subtitle-compact {
-  font-size: 2rem;
+  font-size: clamp(1.2rem, 2vw, 2rem);
   color: var(--text-gray);
-  margin-bottom: 3rem;
+  margin-bottom: clamp(1rem, 3vh, 3rem);
   letter-spacing: 0.05em;
   text-shadow:
     0 0 15px rgba(255, 255, 255, 0.5),
@@ -308,18 +311,21 @@ header {
 .hero-cards-compact {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 2rem;
-  margin-top: -10rem;
+  gap: clamp(1rem, 2vw, 2rem);
+  margin-top: clamp(-6rem, -10vh, -10rem);
   max-width: 1000px;
   width: 100%;
+  flex-shrink: 1;
+  min-height: 0;
 }
 
 @media screen and (max-width: 768px) {
   .hero-cards-compact {
-    grid-template-columns: 1fr;
-    gap: 1.5rem;
-    max-width: 400px;
-    margin-bottom: 2rem;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.8rem;
+    max-width: 100%;
+    margin-bottom: 1rem;
+    margin-top: 0;
   }
 }
 
@@ -329,8 +335,8 @@ header {
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(212, 175, 55, 0.4);
-  border-radius: 24px;
-  padding: 2rem 1.5rem;
+  border-radius: clamp(12px, 2vw, 24px);
+  padding: clamp(1rem, 2vh, 2rem) clamp(0.8rem, 1.5vw, 1.5rem);
   text-align: center;
   cursor: pointer;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
@@ -378,9 +384,9 @@ header {
 }
 
 .card-icon {
-  font-size: 2.4rem;
+  font-size: clamp(1.6rem, 2.5vw, 2.4rem);
   color: var(--sky-blue);
-  margin-bottom: 1rem;
+  margin-bottom: clamp(0.5rem, 1vh, 1rem);
   text-shadow: 0 0 20px rgba(96, 165, 250, 0.5);
 }
 
@@ -401,33 +407,35 @@ header {
 
 @media screen and (max-width: 768px) {
   .card-icon {
-    font-size: 2rem;
+    font-size: 1.4rem;
+    margin-bottom: 0.3rem;
   }
 }
 
 .hero-card-glass h3 {
-  font-size: 2rem;
+  font-size: clamp(1.2rem, 2vw, 2rem);
   color: var(--accent-gold);
-  margin-bottom: 0.8rem;
+  margin-bottom: clamp(0.3rem, 0.8vh, 0.8rem);
   text-shadow: 0 2px 10px rgba(212, 175, 55, 0.4);
   font-family: futura_m;
 }
 
 @media screen and (max-width: 768px) {
   .hero-card-glass h3 {
-    font-size: 1.6rem;
+    font-size: 1rem;
   }
 }
 
 .hero-card-glass p {
-  font-size: 1.2rem;
+  font-size: clamp(0.9rem, 1.2vw, 1.2rem);
   color: var(--text-gray);
-  line-height: 1.5;
+  line-height: 1.4;
 }
 
 @media screen and (max-width: 768px) {
   .hero-card-glass p {
-    font-size: 1.1rem;
+    font-size: 0.8rem;
+    line-height: 1.3;
   }
 }
 
@@ -436,11 +444,12 @@ header {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1rem;
+  gap: clamp(0.5rem, 1vh, 1rem);
+  flex-shrink: 0;
 }
 
 .contact-text {
-  font-size: 1.6rem;
+  font-size: clamp(1.2rem, 1.6vw, 1.6rem);
   color: #ffffff;
   font-family: futura_m;
   letter-spacing: 0.1em;
@@ -448,22 +457,22 @@ header {
     0 0 15px rgba(255, 255, 255, 0.5),
     0 0 30px rgba(255, 255, 255, 0.3),
     0 0 45px rgba(255, 255, 255, 0.2);
-  margin-bottom: 0.5rem;
+  margin-bottom: clamp(0.2rem, 0.5vh, 0.5rem);
 }
 
 @media screen and (max-width: 768px) {
   .contact-text {
-    font-size: 1.4rem;
+    font-size: 1.2rem;
   }
 }
 
 .contact-email {
-  font-size: 1.4rem;
+  font-size: clamp(1rem, 1.4vw, 1.4rem);
   color: #d4af37;
   display: flex;
   align-items: center;
   gap: 0.8rem;
-  padding: 0.8rem 2rem;
+  padding: clamp(0.5rem, 0.8vh, 0.8rem) clamp(1rem, 2vw, 2rem);
   background: rgba(255, 255, 255, 0.05);
   backdrop-filter: blur(10px);
   border: 1px solid rgba(212, 175, 55, 0.4);
@@ -482,17 +491,19 @@ header {
 
 @media screen and (max-width: 768px) {
   .contact-email {
-    font-size: 1.2rem;
+    font-size: 1rem;
+    padding: 0.5rem 1.2rem;
+    gap: 0.5rem;
   }
 }
 
 .hero-social {
   display: flex;
-  gap: 2rem;
+  gap: clamp(1rem, 2vw, 2rem);
 }
 
 .hero-social a {
-  font-size: 2rem;
+  font-size: clamp(1.4rem, 2vw, 2rem);
   color: #d4af37;
   transition: all 0.3s ease;
   text-shadow:
@@ -511,7 +522,101 @@ header {
 
 @media screen and (max-width: 768px) {
   .hero-social a {
-    font-size: 1.6rem;
+    font-size: 1.4rem;
+  }
+}
+
+/* Very short viewports (landscape mobile, small screens) */
+@media screen and (max-height: 600px) {
+  .minimal-header {
+    padding: 1rem;
+  }
+
+  .logo {
+    height: 30px;
+  }
+
+  .hero-compact {
+    padding-top: 3rem;
+    padding-bottom: 1rem;
+  }
+
+  .hero-heading {
+    margin-top: 0;
+  }
+
+  .hero-title-compact {
+    font-size: 3rem;
+    margin-top: 1rem;
+    margin-bottom: 0.3rem;
+  }
+
+  .hero-subtitle-compact {
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+  }
+
+  .hero-cards-compact {
+    gap: 0.5rem;
+    margin-top: 0;
+  }
+
+  .hero-card-glass {
+    padding: 0.6rem 0.5rem;
+    border-radius: 10px;
+  }
+
+  .card-icon {
+    font-size: 1.2rem;
+    margin-bottom: 0.2rem;
+  }
+
+  .hero-card-glass h3 {
+    font-size: 0.9rem;
+    margin-bottom: 0.2rem;
+  }
+
+  .hero-card-glass p {
+    font-size: 0.7rem;
+    line-height: 1.2;
+  }
+
+  .hero-contact {
+    gap: 0.3rem;
+  }
+
+  .contact-text {
+    font-size: 1rem;
+    margin-bottom: 0.2rem;
+  }
+
+  .contact-email {
+    font-size: 0.9rem;
+    padding: 0.4rem 1rem;
+    gap: 0.4rem;
+  }
+
+  .hero-social {
+    gap: 1rem;
+  }
+
+  .hero-social a {
+    font-size: 1.2rem;
+  }
+}
+
+/* Extra small screens */
+@media screen and (max-width: 380px) {
+  .hero-card-glass h3 {
+    font-size: 0.9rem;
+  }
+
+  .hero-card-glass p {
+    font-size: 0.7rem;
+  }
+
+  .contact-email {
+    font-size: 0.9rem;
   }
 }
 
