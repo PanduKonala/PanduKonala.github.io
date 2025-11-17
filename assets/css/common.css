@@ -2019,6 +2019,7 @@ body.theme-blue::-webkit-scrollbar {
   align-items: center;
   padding: 8rem 2rem 2rem;
   overflow: hidden;
+  box-sizing: border-box;
 }
 
 .detail-container {
@@ -2029,6 +2030,7 @@ body.theme-blue::-webkit-scrollbar {
   grid-template-columns: 35% 65%;
   gap: 3rem;
   height: calc(100vh - 10rem);
+  box-sizing: border-box;
 }
 
 @media screen and (max-width: 1024px) {
@@ -2206,11 +2208,34 @@ body.theme-blue::-webkit-scrollbar {
   display: flex;
   flex-direction: column;
   gap: 2.5rem;
+  box-sizing: border-box;
   /* Force compositing layer for reliable backdrop-filter */
   -webkit-transform: translateZ(0);
   transform: translateZ(0);
   will-change: backdrop-filter;
   isolation: isolate;
+}
+
+/* Landscape/short viewport adjustments for detail pages */
+@media screen and (max-height: 600px) {
+  .detail-page {
+    padding: 4rem 2rem 1rem;
+  }
+
+  .detail-container {
+    height: calc(100vh - 5rem);
+    gap: 1.5rem;
+  }
+
+  .detail-left,
+  .detail-right {
+    padding: 1.5rem;
+  }
+
+  .detail-left h1 {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+  }
 }
 
 @media screen and (max-width: 768px) {
