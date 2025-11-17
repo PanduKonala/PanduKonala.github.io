@@ -67,6 +67,7 @@
     const overlay = document.querySelector('.page-transition-overlay');
 
     document.body.classList.add('transitioning');
+    document.body.classList.remove('page-loaded');
 
     // Start exit animation
     if (main) {
@@ -175,6 +176,7 @@
       // Clean up
       setTimeout(() => {
         document.body.classList.remove('transitioning');
+        document.body.classList.add('page-loaded');
         if (main) {
           main.classList.remove('fade-in');
         }
@@ -193,6 +195,7 @@
     const overlay = document.querySelector('.page-transition-overlay');
 
     document.body.classList.add('transitioning');
+    document.body.classList.remove('page-loaded');
 
     if (main) {
       main.classList.add('fade-out');
@@ -265,6 +268,7 @@
 
             setTimeout(() => {
               document.body.classList.remove('transitioning');
+              document.body.classList.add('page-loaded');
               const mainEl = document.querySelector('main');
               if (mainEl) {
                 mainEl.classList.remove('fade-in');

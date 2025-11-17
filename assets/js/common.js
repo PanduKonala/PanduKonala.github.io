@@ -91,6 +91,13 @@
 
     // Add fade-in class to body
     document.body.classList.add('loaded');
+
+    // Enable scrolling after brief delay to prevent scrollbar flash
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        document.body.classList.add('page-loaded');
+      });
+    });
   }
 
   // =============================================

@@ -86,6 +86,11 @@ body {
   background: transparent;  /* Transparent so canvas backdrop-filter works */
   min-height: 100vh;
   overflow-x: hidden;
+  overflow-y: hidden;  /* Hide vertical scroll initially */
+}
+
+body.page-loaded {
+  overflow-y: auto;  /* Enable scroll after page load */
 }
 
 /* Hide Scrollbar */
