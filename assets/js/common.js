@@ -3,7 +3,7 @@
  * Handles smooth scrolling and other common interactions
  */
 
-(function() {
+(function () {
   'use strict';
 
   // =============================================
@@ -13,7 +13,7 @@
     const links = document.querySelectorAll('a[href^="#"]');
 
     links.forEach(link => {
-      link.addEventListener('click', function(e) {
+      link.addEventListener('click', function (e) {
         const href = this.getAttribute('href');
 
         if (href === '#') {
@@ -36,16 +36,23 @@
   // =============================================
   // Fade In on Scroll
   // =============================================
+  // =============================================
+  // Fade In on Scroll
+  // =============================================
   function initScrollAnimations() {
-    const elements = document.querySelectorAll('.fade-in');
+    const elements = document.querySelectorAll('.fade-in, .stagger-animate, .slide-in-left, .slide-in-right');
 
     if (elements.length === 0) return;
 
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
         if (entry.isIntersecting) {
-          entry.target.style.opacity = '1';
-          entry.target.style.transform = 'translateY(0)';
+          if (entry.target.classList.contains('fade-in')) {
+            entry.target.style.opacity = '1';
+            entry.target.style.transform = 'translateY(0)';
+          } else {
+            entry.target.classList.add('visible');
+          }
         }
       });
     }, {
@@ -53,12 +60,17 @@
     });
 
     elements.forEach(el => {
-      el.style.opacity = '0';
-      el.style.transform = 'translateY(20px)';
-      el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+      if (el.classList.contains('fade-in')) {
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(20px)';
+        el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+      }
       observer.observe(el);
     });
   }
+
+  // Expose for page transitions
+  window.initScrollAnimations = initScrollAnimations;
 
   // =============================================
   // Back Button Navigation
@@ -67,7 +79,7 @@
     const backButtons = document.querySelectorAll('.back-btn');
 
     backButtons.forEach(btn => {
-      btn.addEventListener('click', function(e) {
+      btn.addEventListener('click', function (e) {
         e.preventDefault();
 
         // Check if there's history to go back to

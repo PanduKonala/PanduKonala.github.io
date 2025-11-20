@@ -3,7 +3,7 @@
  * Smooth AJAX-based page transitions
  */
 
-(function() {
+(function () {
   'use strict';
 
   let isTransitioning = false;
@@ -45,13 +45,13 @@
     // - Has target="_blank"
     // - Is a download link
     if (!href ||
-        link.hostname !== window.location.hostname ||
-        href.startsWith('#') ||
-        href.startsWith('mailto:') ||
-        href.startsWith('tel:') ||
-        link.getAttribute('target') === '_blank' ||
-        link.hasAttribute('download') ||
-        isTransitioning) {
+      link.hostname !== window.location.hostname ||
+      href.startsWith('#') ||
+      href.startsWith('mailto:') ||
+      href.startsWith('tel:') ||
+      link.getAttribute('target') === '_blank' ||
+      link.hasAttribute('download') ||
+      isTransitioning) {
       return;
     }
 
@@ -295,13 +295,18 @@
       window.initTimeline();
     }
 
+    // Re-initialize scroll animations
+    if (typeof window.initScrollAnimations === 'function') {
+      window.initScrollAnimations();
+    }
+
     // Trigger timeline script if timeline elements exist
     const timelineItems = document.querySelectorAll('.timeline-item');
     if (timelineItems.length > 0) {
       timelineItems.forEach(item => {
         const header = item.querySelector('.timeline-header');
         if (header) {
-          header.addEventListener('click', function() {
+          header.addEventListener('click', function () {
             const isActive = item.classList.contains('active');
 
             // Close all items
@@ -322,7 +327,7 @@
     const navToggle = document.querySelector('.nav-toggle');
     const navMenu = document.querySelector('.nav-menu');
     if (navToggle && navMenu) {
-      navToggle.addEventListener('click', function() {
+      navToggle.addEventListener('click', function () {
         navToggle.classList.toggle('active');
         navMenu.classList.toggle('active');
       });
