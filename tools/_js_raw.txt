@@ -1,0 +1,308 @@
+
+import * as THREE from 'three';
+const reduce=matchMedia('(prefers-reduced-motion:reduce)').matches;
+
+/* hero name: letter by letter, forced two lines */
+const nm=document.getElementById('nm');const raw=nm.textContent;nm.textContent='';let k=0;
+raw.split('|').forEach((word,wi)=>{ if(wi){const b=document.createElement('span');b.className='br';nm.appendChild(b);}
+  [...word].forEach(ch=>{const s=document.createElement('span');s.textContent=ch;s.style.animationDelay=(0.9+k*0.06)+'s';nm.appendChild(s);k++;});});
+
+/* reveals */
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}}),{threshold:.1});
+document.querySelectorAll('.rv').forEach(el=>io.observe(el));
+
+/* ================= Mountain at the viewer's hour: sky, sun, moon, stars, birds, lit terrain ================= */
+const params=new URLSearchParams(location.search);
+/* hour of day, 0-24. Order: ?t= override -> viewer's clock -> DUSK (18.3) if the clock is unusable
+   (blocked Date, privacy shims returning NaN, or a broken query value). */
+const DUSK_FALLBACK=18.3;
+const okHour=h=>Number.isFinite(h)&&h>=0&&h<24;
+let HOUR=DUSK_FALLBACK, hourSrc='fallback';
+if(params.has('t')){const v=parseFloat(params.get('t'));if(okHour(v)){HOUR=v;hourSrc='param';}}
+if(hourSrc==='fallback'&&!params.has('t')){try{const now=new Date();const h=now.getHours()+now.getMinutes()/60;if(okHour(h)){HOUR=h;hourSrc='clock';}}catch(e){}}
+document.querySelectorAll('#bgsw a').forEach(a=>{const v=a.dataset.t;
+  a.href=(v==='now'?location.pathname:'?t='+v)+location.hash;
+  a.classList.toggle('on',(v==='now'&&!params.has('t'))||params.get('t')===v);});
+const phaseName=h=>h<5||h>=20?'night':h<7.5?'dawn':h<17?'day':'dusk';
+document.getElementById('bgcap').textContent=
+  `Sky, sun, moon, aurora and birds ${hourSrc==='clock'?'follow your clock':hourSrc==='param'?'set to':'default (clock unavailable)'} · ${String(Math.floor(HOUR)).padStart(2,'0')}:${String(Math.round((HOUR%1)*60)).padStart(2,'0')} · ${phaseName(HOUR)} · endless terrain, clouds, stars and mist from fBm noise`;
+
+/* ---- sun geometry from the hour: rises left at 06:00, sets right at 18:00 ---- */
+const ang=(HOUR-6)/12*Math.PI, sunEl=Math.sin(ang), sunX=-Math.cos(ang);
+/* compress azimuth/elevation into the 46 degree frustum so the disc is always on screen */
+const cl=(v,a,b)=>Math.max(a,Math.min(b,v));
+const dirOf=(ax,el)=>{const A=cl(ax*0.42,-0.42,0.42),E=cl(el*0.30,-0.10,0.26);
+  return new THREE.Vector3(Math.sin(A)*Math.cos(E),Math.sin(E),-Math.cos(A)*Math.cos(E)).normalize();};
+const sunDir=dirOf(sunX,Math.max(sunEl,-0.30));
+const moonDir=dirOf(-sunX*0.9,0.48);
+const sm=(a,b,x)=>{const t=Math.min(1,Math.max(0,(x-a)/(b-a)));return t*t*(3-2*t);};
+const C=h=>new THREE.Color(h), L=(a,b,t)=>a.clone().lerp(b,t);
+const P={ night:{zen:C('#04070e'),hor:C('#0c1830'),sun:C('#a8b8d8'),ridge:C('#8595bb'),valley:C('#1c2c4e')},
+          dawn :{zen:C('#1c1638'),hor:C('#c8641f'),sun:C('#ffc078'),ridge:C('#f4b264'),valley:C('#3c3358')},
+          dusk :{zen:C('#160f2b'),hor:C('#b8563a'),sun:C('#ff9a5e'),ridge:C('#ef9161'),valley:C('#2e2748')},
+          day  :{zen:C('#2c73b8'),hor:C('#a6cfe6'),sun:C('#ffe6a1'),ridge:C('#f6f8fb'),valley:C('#8fb6c4')}};
+const LOW = HOUR>12.5 ? P.dusk : P.dawn;
+let K;{ if(sunEl<0.06){const t=sm(-0.34,0.06,sunEl);K=Object.fromEntries(Object.keys(P.night).map(k=>[k,L(P.night[k],LOW[k],t)]));}
+        else{const t=sm(0.06,0.52,sunEl);K=Object.fromEntries(Object.keys(P.day).map(k=>[k,L(LOW[k],P.day[k],t)]));} }
+const nightF=1-sm(-0.30,0.08,sunEl), dayF=sm(-0.12,0.15,sunEl);
+document.querySelector('.vig').style.setProperty('--vk',(1-0.55*dayF).toFixed(3));
+
+const canvas=document.getElementById('sky');
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false,powerPreference:'high-performance'});
+renderer.setPixelRatio(Math.min(devicePixelRatio,1.75));renderer.setClearColor(K.zen,1);
+const scene=new THREE.Scene();
+const camera=new THREE.PerspectiveCamera(46,innerWidth/innerHeight,.1,6000);
+const U={uT:{value:0},uS:{value:1},uZen:{value:K.zen},uHor:{value:K.hor},uSun:{value:K.sun},uSunDir:{value:sunDir},uEl:{value:sunEl},
+  uRidge:{value:K.ridge},uValley:{value:K.valley}};
+
+function hash(x,y){let h=Math.sin(x*127.1+y*311.7)*43758.5453;return h-Math.floor(h);}
+function vnoise(x,y){const xi=Math.floor(x),yi=Math.floor(y),xf=x-xi,yf=y-yi,u=xf*xf*(3-2*xf),v=yf*yf*(3-2*yf);
+  const a=hash(xi,yi),b=hash(xi+1,yi),c=hash(xi,yi+1),d=hash(xi+1,yi+1);return a+(b-a)*u+(c-a)*v+(a-b-c+d)*u*v;}
+function fbm(x,y,oct=6){let s=0,a=.5,f=1;for(let i=0;i<oct;i++){s+=a*vnoise(x*f,y*f);f*=2.03;a*=.5;}return s;}
+const FOG=`float fogOf(float d,float k){return exp(-d*d*k);}`;
+const DISC=`vec2 q=gl_PointCoord-0.5; float m=1.0-smoothstep(0.0,0.5,length(q));`;
+
+/* ---- sky dome: gradient + sun glow + procedural stars + clouds (stars sit UNDER the clouds) ---- */
+U.uScroll={value:0};U.uNight={value:nightF};
+const GNOISE=`
+  float h21(vec2 p){p=fract(p*vec2(123.34,456.21));p+=dot(p,p+45.32);return fract(p.x*p.y);}
+  float h31(vec3 p){p=fract(p*vec3(123.34,456.21,789.13));p+=dot(p,p.yzx+45.32);return fract(p.x*p.y*p.z);}
+  float vn2(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.0-2.0*f);
+    float a=h21(i),b=h21(i+vec2(1.0,0.0)),c=h21(i+vec2(0.0,1.0)),d=h21(i+vec2(1.0,1.0));
+    return mix(mix(a,b,f.x),mix(c,d,f.x),f.y);}
+  float fbm2(vec2 p){float s=0.0,a=0.5;for(int i=0;i<5;i++){s+=a*vn2(p);p*=2.04;a*=0.5;}return s;}
+  float fbm6(vec2 p){float s=0.0,a=0.5;for(int i=0;i<6;i++){s+=a*vn2(p);p*=2.03;a*=0.5;}return s;}`;
+const sky=new THREE.Mesh(new THREE.SphereGeometry(4000,64,32),new THREE.ShaderMaterial({uniforms:U,side:THREE.BackSide,depthWrite:false,
+  vertexShader:`varying vec3 vD;void main(){vD=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}`,
+  fragmentShader:`uniform vec3 uZen,uHor,uSun,uSunDir;uniform float uEl,uT,uNight;varying vec3 vD;${GNOISE}
+    /* random stars: voxel hash on the direction vector, varied size + brightness, slow twinkle */
+    float stars(vec3 d){float acc=0.0;
+      for(int k=0;k<2;k++){float sc=k==0?260.0:140.0;vec3 p=d*sc;vec3 c=floor(p);
+        float r=h31(c);if(r<(k==0?0.92:0.965))continue;
+        vec3 o=vec3(h31(c+1.7),h31(c+9.1),h31(c+3.3));
+        float dist=length(p-(c+o));float sz=0.10+0.22*h31(c+5.5)*(k==0?1.0:1.8);
+        float tw=0.75+0.25*sin(uT*(1.0+2.0*h31(c+7.7))+r*40.0);
+        acc+=smoothstep(sz,0.0,dist)*tw*(0.55+0.45*h31(c+2.2));}
+      return acc;}
+    void main(){vec3 d=normalize(vD);float y=d.y;float up=clamp(y,0.0,1.0);
+      vec2 hd=normalize(vec2(d.x,d.z)), hs=normalize(vec2(uSunDir.x,uSunDir.z));
+      float azw=pow(clamp(dot(hd,hs)*0.5+0.5,0.0,1.0),2.2);
+      vec3 hor=mix(uZen*1.02,uHor,0.10+0.90*azw);
+      vec3 c=mix(hor,uZen,pow(up,0.62));
+      c=mix(c,uZen*0.30,smoothstep(0.0,-0.22,y));
+      float s=max(dot(d,uSunDir),0.0);
+      float nearH=1.0-smoothstep(-0.10,0.55,uEl);
+      float vis=smoothstep(-0.26,0.04,uEl);
+      float hi=smoothstep(0.35,0.9,uEl);
+      c+=uSun*(pow(s,260.0)*1.2+pow(s,18.0)*(0.14+0.42*nearH)+pow(s,4.0)*0.22*hi)*vis;
+      /* stars, fading toward the horizon haze and with daylight */
+      c+=vec3(0.86,0.90,1.0)*stars(d)*uNight*smoothstep(0.0,0.18,y)*1.15;
+      /* aurora: night only. The frustum only spans ~50 degrees, so the curtain noise runs at a high
+         azimuth frequency or it reads as a flat wash. Bright lower edge, fading upward, green -> violet. */
+      float aur=uNight*smoothstep(0.035,0.09,y)*exp(-max(y-0.09,0.0)*5.5);
+      if(aur>0.001){
+        float az=atan(d.x,-d.z);
+        float band=fbm2(vec2(az*6.0+uT*0.03,y*2.6-uT*0.012));
+        float band2=fbm2(vec2(az*11.0-uT*0.02+5.0,y*3.2));
+        float ray=vn2(vec2(az*60.0+uT*0.10,y*1.2))*0.6+vn2(vec2(az*130.0-uT*0.06,0.0))*0.4;
+        float curt=smoothstep(0.34,0.78,band)*(0.62+0.38*ray)+smoothstep(0.52,0.88,band2)*0.45*(0.5+0.5*ray);
+        vec3 ac=mix(vec3(0.22,1.00,0.62),vec3(0.66,0.42,1.00),smoothstep(0.09,0.26,y));
+        c+=ac*curt*aur*1.6;}
+      /* clouds drawn LAST so they cover the stars; night keeps thinner cover */
+      vec2 uv=d.xz/max(y,0.055);
+      float f=fbm2(uv*0.34+vec2(uT*0.0055,uT*0.0018));
+      f=mix(f,fbm2(uv*0.85+vec2(uT*0.011,0.0)),0.35);
+      float cover=mix(0.50,0.58,uNight);
+      float cl=smoothstep(cover,cover+0.30,f)*smoothstep(0.015,0.30,y)*(1.0-smoothstep(0.75,1.0,up));
+      vec3 lit=mix(uZen*1.35+vec3(0.015),mix(uSun,vec3(0.97,0.98,1.0),0.6*smoothstep(0.35,0.9,uEl)),(0.20+0.62*pow(s,3.0))*vis+0.35*smoothstep(0.35,0.9,uEl));
+      lit=mix(lit,vec3(0.16,0.19,0.27),uNight*0.55);        // moonlit grey at night
+      c=mix(c,lit,cl*0.78);
+      gl_FragColor=vec4(c,1.0);}`}));
+scene.add(sky);
+
+/* ---- sun disc (depth-tested, so ridges hide it) + FULL moon with a wide halo ---- */
+const sunGrp=new THREE.Group();scene.add(sunGrp);
+const hiSun=sm(0.35,0.9,sunEl);
+const sunDisc=L(K.sun,C('#fff3c4'),0.55*hiSun);
+sunGrp.add(new THREE.Mesh(new THREE.CircleGeometry(56,48),new THREE.MeshBasicMaterial({color:sunDisc,transparent:true,opacity:1,depthWrite:false})));
+sunGrp.add(new THREE.Mesh(new THREE.CircleGeometry(150,48),new THREE.ShaderMaterial({uniforms:U,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,
+  vertexShader:`varying vec2 vU;void main(){vU=uv*2.0-1.0;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}`,
+  fragmentShader:`uniform vec3 uSun;uniform float uEl;varying vec2 vU;void main(){float r=length(vU);float hi=smoothstep(0.35,0.9,uEl);gl_FragColor=vec4(uSun,pow(max(0.0,1.0-r),2.2)*(0.55+0.15*hi));}`})));
+sunGrp.visible=sunEl>-0.12;
+const moon=new THREE.Mesh(new THREE.CircleGeometry(66,64),new THREE.ShaderMaterial({transparent:true,depthWrite:false,uniforms:{uA:{value:nightF}},
+  vertexShader:`varying vec2 vU;void main(){vU=uv*2.0-1.0;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}`,
+  fragmentShader:`uniform float uA;varying vec2 vU;${GNOISE}
+    void main(){float r=length(vU);if(r>1.0)discard;
+      float mare=fbm2(vU*2.6+3.0);                         // faint seas on the face
+      vec3 col=mix(vec3(0.80,0.84,0.92),vec3(0.96,0.97,1.0),smoothstep(0.35,0.7,mare));
+      float edge=1.0-smoothstep(0.90,1.0,r);
+      gl_FragColor=vec4(col,edge*uA);}`}));
+const halo=new THREE.Mesh(new THREE.CircleGeometry(430,64),new THREE.ShaderMaterial({transparent:true,depthWrite:false,
+  blending:THREE.AdditiveBlending,uniforms:{uA:{value:nightF}},
+  vertexShader:`varying vec2 vU;void main(){vU=uv*2.0-1.0;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}`,
+  fragmentShader:`uniform float uA;varying vec2 vU;void main(){float r=length(vU);
+    float g=pow(max(0.0,1.0-r),2.2)*0.34+pow(max(0.0,1.0-r*3.2),1.5)*0.55;
+    gl_FragColor=vec4(vec3(0.70,0.78,0.95),g*uA);}`}));
+scene.add(moon);scene.add(halo);moon.visible=halo.visible=nightF>0.02;
+
+/* ---- terrain: heights from fBm of WORLD coordinates in the vertex shader -> endless forward travel.
+        Solid, lit surface: normal from finite differences of the height field, sun/moon key light,
+        sky ambient, hemisphere fill in the valley, distance fog. ---- */
+/* height field shared by terrain and water: valley + meandering river channel (water level y=0) */
+const HFN=`
+  float riverC(float z){return sin(z*0.0019)*85.0+sin(z*0.0047+1.3)*30.0;}
+  float height(vec2 q){float rc=riverC(q.y);
+    float h=fbm6(q*0.0028+vec2(3.1,7.7));h=pow(h,1.9)*300.0;
+    float r=1.0-abs(2.0*fbm2(q*0.011+vec2(9.0,2.0))-1.0);h+=r*r*46.0*smoothstep(40.0,160.0,h);
+    h+=fbm2(q*0.045)*9.0;
+    h*=1.0-0.85*exp(-pow((q.x-rc*0.7)/150.0,2.0));            // valley follows the river loosely
+    float dx=abs(q.x-rc)+(fbm2(q*0.02)-0.5)*16.0;               // ragged banks
+    h=mix(h,-7.0-fbm2(q*0.08)*2.0,smoothstep(60.0,20.0,dx));    // river bed below water level
+    return h;}`;
+const grp=new THREE.Group();scene.add(grp);
+const TW=2000,TD=3200;
+{const geo=new THREE.PlaneGeometry(TW,TD,400,640);geo.rotateX(-Math.PI/2);
+ const HVS=`uniform float uS,uScroll;varying float vH,vF;varying vec3 vN;${FOG}${GNOISE}${HFN}
+   void main(){vec2 q=vec2(position.x,position.z+uScroll);float h=height(q);
+     float e=3.0;float hx=height(q+vec2(e,0.0)),hz=height(q+vec2(0.0,e));
+     vN=normalize(vec3(h-hx,e,h-hz));
+     vec3 P=vec3(position.x,h,position.z);vH=h;
+     vec4 mv=modelViewMatrix*vec4(P,1.0);float d=-mv.z;vF=fogOf(d,0.00000062);gl_Position=projectionMatrix*mv;}`;
+ grp.add(new THREE.Mesh(geo,new THREE.ShaderMaterial({uniforms:U,vertexShader:HVS,
+   fragmentShader:`uniform vec3 uZen,uHor,uValley,uRidge,uSun,uSunDir;uniform float uEl,uNight;varying float vH,vF;varying vec3 vN;
+     void main(){vec3 n=normalize(vN);
+       /* key light: the sun by day, the moon (opposite side, cool) by night */
+       vec3 L=normalize(vec3(uSunDir.x,max(uSunDir.y,0.12),uSunDir.z));
+       vec3 Lm=normalize(vec3(-uSunDir.x*0.9,0.45,-0.6));
+       float dayK=smoothstep(-0.20,0.05,uEl);
+       float diff=max(dot(n,L),0.0)*dayK+max(dot(n,Lm),0.0)*(1.0-dayK)*1.05;
+       vec3 keyC=mix(vec3(0.72,0.80,1.05),uSun,dayK);
+       /* ambient: sky from above, valley colour from below (hemisphere) */
+       float up=n.y*0.5+0.5;
+       vec3 amb=mix(uValley*1.4,mix(uHor,uZen,0.5)*1.3,up);
+       /* by day the sky bounce is desaturated so snow reads white, not cyan */
+       amb=mix(amb,vec3(dot(amb,vec3(0.299,0.587,0.114)))*1.04,dayK*0.80);
+       /* albedo: rock/tussock low, pale stone and snow on the ridges.
+          By day the low slopes turn olive tussock; by night they stay blue rock. */
+       float t=smoothstep(60.0,240.0,vH);
+       vec3 lowRock=mix(vec3(0.30,0.34,0.42),vec3(0.36,0.42,0.30),dayK*0.85);
+       vec3 alb=mix(lowRock,vec3(0.84,0.86,0.89),t);
+       float ex=mix(1.35,1.72,dayK);                               // daylight exposure
+       vec3 col=alb*(amb*(0.55+0.30*dayK)+keyC*diff*(0.95+1.15*dayK))*ex;
+       col+=uRidge*(0.12+0.16*dayK)*t*diff;                       // warm rim on lit ridges
+       col+=uValley*0.35*(1.0-smoothstep(0.0,110.0,vH));          // glow in the valley floor
+       col+=vec3(0.07,0.13,0.12)*uNight*up*(0.45+0.55*t);      // aurora/sky glow on upward faces at night
+       vec3 fogc=mix(uHor,uZen,mix(0.35,0.18,dayK))*mix(1.0,1.22,dayK);          // aerial perspective by day
+       gl_FragColor=vec4(mix(fogc,col,vF),1.0);}`})));}
+
+/* ---- the river: a flat sheet at y=0 riding in the terrain group. Depth-tested against the carved
+        channel, so only the bed shows water. Flowing fBm normals, Fresnel sky reflection, sun/moon
+        glint, aurora spill at night, soft shoreline + foam. ---- */
+{const wg=new THREE.PlaneGeometry(TW,TD,1,1);wg.rotateX(-Math.PI/2);
+ grp.add(new THREE.Mesh(wg,new THREE.ShaderMaterial({uniforms:U,transparent:true,depthWrite:false,
+  vertexShader:`uniform float uScroll;varying vec2 vQ;varying vec3 vW;
+    void main(){vQ=vec2(position.x,position.z+uScroll);vec4 w=modelMatrix*vec4(position,1.0);vW=w.xyz;gl_Position=projectionMatrix*viewMatrix*w;}`,
+  fragmentShader:`uniform vec3 uZen,uHor,uSun,uSunDir,uValley;uniform float uT,uEl,uNight;varying vec2 vQ;varying vec3 vW;${FOG}${GNOISE}${HFN}
+    void main(){
+      float dx=vQ.x-riverC(vQ.y);if(abs(dx)>80.0)discard;
+      float depth=-height(vQ);if(depth<0.0)discard;             // water surface is y=0
+      float dayK=smoothstep(-0.20,0.05,uEl);
+      /* flow: two noise layers drifting downstream toward the viewer */
+      vec2 fq=vec2(dx*0.055,vQ.y*0.045);
+      float n1=fbm2(fq+vec2(0.0,-uT*0.85)),n2=fbm2(fq*2.4+vec2(4.0,-uT*1.5));
+      float rip=(n1-0.5)*0.32+(n2-0.5)*0.20;
+      vec3 n=normalize(vec3(rip*1.5,1.0,rip*0.8));
+      vec3 V=normalize(cameraPosition-vW);
+      float fres=0.22+0.78*pow(1.0-max(dot(n,V),0.0),2.6);
+      vec3 skyRef=mix(uHor,uZen,0.45)*mix(0.55,1.0,dayK);
+      vec3 deep=mix(vec3(0.03,0.06,0.11),vec3(0.10,0.26,0.34),dayK*0.7);
+      vec3 col=mix(deep,skyRef,fres);
+      /* glint from the sun by day, the moon by night */
+      vec3 L=normalize(vec3(uSunDir.x,max(uSunDir.y,0.08),uSunDir.z));
+      vec3 Lm=normalize(vec3(-uSunDir.x*0.9,0.45,-0.6));
+      float spec=pow(max(dot(n,normalize(L+V)),0.0),160.0)*dayK*0.55
+                +pow(max(dot(n,normalize(Lm+V)),0.0),60.0)*(1.0-dayK)*1.4;
+      col+=mix(vec3(0.75,0.82,1.0),uSun,dayK)*spec;
+      col+=vec3(0.14,0.34,0.26)*uNight*(0.45+0.55*n1)*(0.35+0.65*fres);     // aurora on the water
+      col+=vec3(0.26,0.32,0.50)*uNight*(0.45+0.55*fres);                   // moonlit sheen so the river reads at night
+      /* shoreline: shallow water fades out; a little foam along the banks */
+      float a=smoothstep(0.0,2.5,depth);
+      float foam=smoothstep(0.5,0.0,abs(depth-1.3))*smoothstep(0.52,0.78,fbm2(fq*3.0+vec2(uT*1.1,0.0)));
+      col+=vec3(0.85,0.9,0.95)*foam*(0.25+0.45*dayK);
+      float f=fogOf(length(cameraPosition-vW),0.00000062);
+      vec3 fogc=mix(uHor,uZen,mix(0.35,0.18,dayK))*mix(1.0,1.22,dayK);
+      gl_FragColor=vec4(mix(fogc,col,f),a*0.97);}`})));}
+const SPEED=26;   // world units per second of forward travel
+const riverC=z=>Math.sin(z*0.0019)*85+Math.sin(z*0.0047+1.3)*30;   // JS twin of the shader's riverC
+
+/* ---- valley mist ---- */
+const mist=new THREE.Mesh(new THREE.PlaneGeometry(4200,4200,1,1),new THREE.ShaderMaterial({uniforms:U,transparent:true,depthWrite:false,
+  blending:THREE.AdditiveBlending,
+  vertexShader:`varying vec2 vP;void main(){vP=position.xy;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}`,
+  fragmentShader:`uniform vec3 uValley,uSun;uniform float uT,uEl,uScroll;varying vec2 vP;${GNOISE}
+    void main(){vec2 p=vec2(vP.x,-vP.y+uScroll)*0.0016;
+      float f=fbm2(p*1.6+vec2(uT*0.014,0.0));
+      float a=smoothstep(0.48,0.92,f)*0.16;a*=1.0-smoothstep(700.0,1300.0,length(vP));
+      vec3 c=mix(uValley*1.15,uSun*0.30,0.18*smoothstep(-0.1,0.4,uEl));gl_FragColor=vec4(c,a);}`}));
+mist.rotation.x=-Math.PI/2;scene.add(mist);
+
+/* ---- birds: three small distant clusters, loose formation ---- */
+const FLOCKS=[{n:9,off:0,sp:9,h:260,z:-1500,side:-1},{n:12,off:700,sp:7,h:300,z:-1900,side:1},{n:7,off:1300,sp:11,h:230,z:-1300,side:-1}];
+const NB=FLOCKS.reduce((a,f)=>a+f.n,0),bgeo=new THREE.BufferGeometry(),bpos=new Float32Array(NB*4*3);
+bgeo.setAttribute('position',new THREE.BufferAttribute(bpos,3));
+const birdCol=new THREE.Color('#080a10').lerp(new THREE.Color('#dfe6f2'),Math.max(0,1-dayF*1.25));
+const birds=new THREE.LineSegments(bgeo,new THREE.LineBasicMaterial({color:birdCol,transparent:true,opacity:0.7}));
+scene.add(birds);birds.visible=sunEl>-0.20;
+const BR=(i)=>hash(i*1.7,3.3);
+function flock(t,camZ){let o=0,id=0;
+  for(const F of FLOCKS){const span=2400,lx=F.side*(-1200+((t*F.sp+F.off)%span)),ly=F.h+18*Math.sin(t*0.15+F.off),lz=camZ+F.z;
+    for(let i=0;i<F.n;i++,id++){const k=Math.ceil(i/2),side=i%2?1:-1;
+      const x=lx+F.side*side*k*14+Math.sin(t*0.7+id)*6,y=ly-k*3.5+Math.sin(t*0.5+id*1.3)*4+BR(id)*10,z=lz+k*9+BR(id)*40;
+      const w=5+BR(id)*2,fl=Math.sin(t*(6+BR(id)*2)+id*1.3)*0.7;
+      bpos[o++]=x;bpos[o++]=y;bpos[o++]=z;bpos[o++]=x-w;bpos[o++]=y+fl*w*0.8;bpos[o++]=z+2;
+      bpos[o++]=x;bpos[o++]=y;bpos[o++]=z;bpos[o++]=x+w;bpos[o++]=y+fl*w*0.8;bpos[o++]=z+2;}}
+  bgeo.attributes.position.needsUpdate=true;}
+
+/* ---- camera + loop ---- */
+let mx=0,my=0,tx=0,ty=0;
+addEventListener('pointermove',e=>{tx=e.clientX/innerWidth-.5;ty=e.clientY/innerHeight-.5;},{passive:true});
+function resize(){camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);U.uS.value=innerHeight*devicePixelRatio/900;}
+addEventListener('resize',resize);resize();
+const clock=new THREE.Clock();
+(function loop(){requestAnimationFrame(loop);const t=reduce?0:clock.getElapsedTime();U.uT.value=t;
+  mx+=(tx-mx)*.03;my+=(ty-my)*.03;const p=Math.min(scrollY/(document.body.scrollHeight-innerHeight||1),1);
+  /* fly along the river: the camera and its aim point track the meander (same riverC as the shaders,
+     evaluated in noise space = world z minus the scroll distance), so it never clips a valley wall */
+  const S=t*SPEED,camZ=260-p*420;
+  const rx=riverC(camZ-S),ax=riverC(camZ-420-S);
+  camera.position.set(rx+mx*18+Math.sin(t*0.11)*10,40-p*10-my*6,camZ);
+  camera.up.set(Math.sin(t*0.07)*0.03,1,0);
+  camera.lookAt(ax+mx*40,70-p*8,camZ-420);
+  /* the ground stays glued to the camera; the noise field slides underneath it */
+  /* snap noise sampling to the vertex lattice: no per-frame re-sampling, so no wobble */
+  {const step=TD/640,base=camera.position.z-TD/2+120;
+   const q=Math.floor((base-S)/step)*step;grp.position.z=S+q;U.uScroll.value=q;}
+  sky.position.copy(camera.position);
+  sunGrp.position.copy(camera.position).addScaledVector(sunDir,3800);sunGrp.lookAt(camera.position);
+  moon.position.copy(camera.position).addScaledVector(moonDir,3800);moon.lookAt(camera.position);
+  halo.position.copy(moon.position);halo.lookAt(camera.position);
+  mist.position.set(camera.position.x,22,camera.position.z-1100);
+  if(birds.visible)flock(t,camera.position.z);
+  renderer.render(scene,camera);})();
+
+/* ---------- gold epicycle plate in the Research header (canvas 2D) ---------- */
+const pc=document.getElementById('plate'),px=pc.getContext('2d');let pt=0,trail=[];
+function ep(t){const R=44;let x=0,y=0;const parts=[];for(let n=1;n<=9;n+=2){const r=R*(4/(n*Math.PI))*0.7;parts.push({x,y,r});x+=r*Math.cos(n*t);y+=r*Math.sin(n*t);}return{x,y,parts};}
+for(let i=0;i<260;i++){const e=ep(pt);trail.push(e.y);pt+=0.03;}
+(function pl(){
+  if(!reduce)requestAnimationFrame(pl);
+  px.clearRect(0,0,360,144);const cx=80,cy=72,e=ep(pt);
+  px.strokeStyle='rgba(217,168,58,.35)';px.lineWidth=1;
+  e.parts.forEach(c=>{px.beginPath();px.arc(cx+c.x,cy+c.y,c.r,0,6.2832);px.stroke();});
+  px.strokeStyle='rgba(243,205,110,.8)';px.beginPath();px.moveTo(cx,cy);e.parts.slice(1).forEach(c=>px.lineTo(cx+c.x,cy+c.y));px.lineTo(cx+e.x,cy+e.y);px.stroke();
+  px.strokeStyle='rgba(217,168,58,.35)';px.beginPath();px.moveTo(cx+e.x,cy+e.y);px.lineTo(150,cy+e.y);px.stroke();
+  trail.push(e.y);if(trail.length>200)trail.shift();
+  px.strokeStyle='#f3cd6e';px.lineWidth=1.4;px.beginPath();trail.forEach((y,i)=>{const X=150+(trail.length-1-i);i?px.lineTo(X,cy+y):px.moveTo(X,cy+y);});px.stroke();
+  px.fillStyle='#f3cd6e';px.beginPath();px.arc(cx+e.x,cy+e.y,2.4,0,6.2832);px.fill();
+  pt+=0.03;
+})();

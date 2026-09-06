@@ -1,219 +1,61 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-Z8PFVPLHSL"></script>
-    <script>
-        window.dataLayer = window.dataLayer || [];
-        function gtag() { dataLayer.push(arguments); }
-        gtag('js', new Date());
-
-        gtag('config', 'G-Z8PFVPLHSL');
-    </script>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description"
-        content="Research publications in Infrastructure as Code Security, Supply Chain Attack Detection, and DevSecOps by Pandu Konala. Published at IEEE CSR, Springer DBSec, and international journals.">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <meta name="author" content="Pandu Ranga Reddy Konala">
-    <meta name="keywords"
-        content="Infrastructure as Code Research, Supply Chain Security Papers, DevSecOps Publications, Ansible Security Research, IEEE CSR, Springer DBSec, Static Configuration Analysis">
-    <meta property="og:type" content="website">
-    <meta property="og:locale" content="en_US">
-    <meta property="og:title" content="Research Publications - Pandu Konala">
-    <meta property="og:description"
-        content="Research publications in Infrastructure as Code Security, Supply Chain Attack Detection, and DevSecOps">
-    <meta property="og:image" content="https://pandukonala.github.io/assets/icons/fox_icon.jpg">
-    <meta property="og:url" content="https://pandukonala.github.io/writing.html">
-    <meta property="twitter:card" content="summary_large_image">
-    <meta property="twitter:title" content="Research - Pandu Konala">
-    <meta property="twitter:description" content="Explore my previous & ongoing research">
-    <link rel="stylesheet" href="assets/css/common.css">
-    <link rel="stylesheet" href="assets/css/font-awesome-all.css">
-    <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/apple-touch-icon.png">
-    <link rel="icon" type="image/x-icon" href="assets/icons/favicon.ico">
-    <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="assets/icons/favicon-16x16.png">
-    <title>Research - Pandu Konala</title>
-    <link rel="canonical" href="https://pandukonala.github.io/writing.html">
-
-    <!-- Structured Data -->
-    <script type="application/ld+json">
-    {
-        "@context": "https://schema.org",
-        "@type": "CollectionPage",
-        "name": "Research Publications",
-        "description": "Academic research publications in Infrastructure as Code Security, Supply Chain Attack Detection, and DevSecOps",
-        "author": {
-            "@type": "Person",
-            "name": "Pandu Ranga Reddy Konala",
-            "@id": "https://pandukonala.github.io/#person"
-        },
-        "about": [
-            "Infrastructure as Code Security",
-            "Supply Chain Security",
-            "DevSecOps",
-            "Static Configuration Analysis"
-        ],
-        "breadcrumb": {
-            "@type": "BreadcrumbList",
-            "itemListElement": [
-                {
-                    "@type": "ListItem",
-                    "position": 1,
-                    "name": "Home",
-                    "item": "https://pandukonala.github.io/"
-                },
-                {
-                    "@type": "ListItem",
-                    "position": 2,
-                    "name": "Research",
-                    "item": "https://pandukonala.github.io/writing.html"
-                }
-            ]
-        }
-    }
-    </script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Research · Pandu Konala</title>
+<meta name="description" content="Peer-reviewed papers and patents on Infrastructure as Code security, supply-chain integrity and decentralised systems.">
+<meta name="author" content="Pandu Ranga Reddy Konala">
+<meta property="og:title" content="Research · Pandu Konala">
+<meta property="og:description" content="Peer-reviewed papers and patents on Infrastructure as Code security, supply-chain integrity and decentralised systems.">
+<meta property="og:type" content="website">
+<link rel="icon" href="assets/icons/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon-32x32.png">
+<link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
+<link rel="stylesheet" href="assets/css/noir.css?v=8df2095a">
 </head>
+<body data-page="writing">
+<canvas id="sky"></canvas><div class="vig"></div><div class="grain"></div>
+<div class="bar t"></div><div class="bar b"></div>
+<nav class="bgsw" id="bgsw"><span class="lbl">Sky</span><a data-t="now">Now</a><a data-t="6.3">Dawn</a><a data-t="12">Day</a><a data-t="18.3">Dusk</a><a data-t="23">Night</a></nav>
 
-<body class="theme-green">
-    <header class="minimal-header">
-        <a href="index.html" class="logo-link"><img src="assets/icons/fox.webp" alt="Logo" class="logo"></a>
-    </header>
-    <main>
-        <section class="grid-page">
-            <div class="skills-container" style="margin-top: 3rem;">
-                <h1 class="grid-title fade-in" style="margin-bottom: 1rem;">RESEARCH</h1>
-                <div class="back-nav"
-                    style="text-align: center; margin-bottom: 2rem; border-top: none; padding-top: 0;">
-                    <a href="index.html" class="back-btn" style="font-size: 1.2rem;">Back to Home</a>
-                </div>
-                <div class="timeline-container">
-                    <div class="timeline-item fade-in" data-id="0">
-                        <div class="timeline-header">
-                            <span class="timeline-date">Nov 2025</span>
-                            <i class="fas fa-file-alt timeline-icon"></i>
-                            <span class="timeline-title">Tracking Security Smell Diffusion Patterns</span>
-                            <span class="timeline-type">Paper</span>
-                            <i class="fas fa-chevron-down timeline-expand-icon"></i>
-                        </div>
-                        <div class="timeline-content">
-                            <p class="timeline-description">Methodology for detecting security smell diffusion and
-                                repository clones in Ansible playbooks using metadata.</p>
-                            <a href="blog-work/paper_ansible_diffusion/paper_ansible_diffusion.html"
-                                class="timeline-link">View Details</a>
-                        </div>
-                    </div>
-                    <div class="timeline-item fade-in" data-id="1">
-                        <div class="timeline-header">
-                            <span class="timeline-date">Jun 2025</span>
-                            <i class="fas fa-file-alt timeline-icon"></i>
-                            <span class="timeline-title">Supply-Chain Attack Detection for Ansible</span>
-                            <span class="timeline-type">Paper</span>
-                            <i class="fas fa-chevron-down timeline-expand-icon"></i>
-                        </div>
-                        <div class="timeline-content">
-                            <p class="timeline-description">Metadata-assisted detection of supply chain attacks in
-                                Infrastructure as Code, focusing on security smells identification.</p>
-                            <a href="blog-work/paper_ansible_metadata/paper_ansible_metadata.html"
-                                class="timeline-link">View Details</a>
-                        </div>
-                    </div>
-                    <div class="timeline-item fade-in" data-id="2">
-                        <div class="timeline-header">
-                            <span class="timeline-date">Feb 2025</span>
-                            <i class="fas fa-file-alt timeline-icon"></i>
-                            <span class="timeline-title">Framework for Measuring IaC Quality</span>
-                            <span class="timeline-type">Paper</span>
-                            <i class="fas fa-chevron-down timeline-expand-icon"></i>
-                        </div>
-                        <div class="timeline-content">
-                            <p class="timeline-description">Framework for assessing Infrastructure as Code quality using
-                                Ansible Galaxy repositories and code quality metrics.</p>
-                            <a href="blog-work/paper_iac_quality/paper_iac_quality.html" class="timeline-link">View
-                                Details</a>
-                        </div>
-                    </div>
-                    <div class="timeline-item fade-in" data-id="3">
-                        <div class="timeline-header">
-                            <span class="timeline-date">Jul 2023</span>
-                            <i class="fas fa-file-alt timeline-icon"></i>
-                            <span class="timeline-title">SoK: Static Configuration Analysis in IaC</span>
-                            <span class="timeline-type">Paper</span>
-                            <i class="fas fa-chevron-down timeline-expand-icon"></i>
-                        </div>
-                        <div class="timeline-content">
-                            <p class="timeline-description">Systematic review of tools for analyzing Infrastructure as
-                                Code scripts, examining static configuration analysis techniques.</p>
-                            <a href="blog-work/paper_iac/paper_iac.html" class="timeline-link">View Details</a>
-                        </div>
-                    </div>
-                    <div class="timeline-item fade-in" data-id="4">
-                        <div class="timeline-header">
-                            <span class="timeline-date">Jan 2021</span>
-                            <i class="fas fa-shield-alt timeline-icon"></i>
-                            <span class="timeline-title">Secure Media Streaming Using IPFS</span>
-                            <span class="timeline-type">Patent</span>
-                            <i class="fas fa-chevron-down timeline-expand-icon"></i>
-                        </div>
-                        <div class="timeline-content">
-                            <p class="timeline-description">Framework for decentralized media streaming prioritizing
-                                user privacy through P2P architecture.</p>
-                            <a href="blog-work/patent_ipfs/patent_ipfs.html" class="timeline-link">View Details</a>
-                        </div>
-                    </div>
-                    <div class="timeline-item fade-in" data-id="5">
-                        <div class="timeline-header">
-                            <span class="timeline-date">Dec 2020</span>
-                            <i class="fas fa-shield-alt timeline-icon"></i>
-                            <span class="timeline-title">Secure Radio Communication Using PUFs</span>
-                            <span class="timeline-type">Patent</span>
-                            <i class="fas fa-chevron-down timeline-expand-icon"></i>
-                        </div>
-                        <div class="timeline-content">
-                            <p class="timeline-description">Authenticated encrypted radio communication using Physically
-                                Unclonable Functions for IIoT.</p>
-                            <a href="blog-work/patent_radio/patent_radio.html" class="timeline-link">View Details</a>
-                        </div>
-                    </div>
-                    <div class="timeline-item fade-in" data-id="6">
-                        <div class="timeline-header">
-                            <span class="timeline-date">Mar 2018</span>
-                            <i class="fas fa-file-alt timeline-icon"></i>
-                            <span class="timeline-title">Access Mechanism Using IPFS</span>
-                            <span class="timeline-type">Paper</span>
-                            <i class="fas fa-chevron-down timeline-expand-icon"></i>
-                        </div>
-                        <div class="timeline-content">
-                            <p class="timeline-description">PGP-based encryption for secure P2P communication over IPFS
-                                network for IoT devices.</p>
-                            <a href="blog-work/paper_ipfs/paper_ipfs.html" class="timeline-link">View Details</a>
-                        </div>
-                    </div>
-                    <div class="timeline-item fade-in" data-id="7">
-                        <div class="timeline-header">
-                            <span class="timeline-date">Dec 2017</span>
-                            <i class="fas fa-file-alt timeline-icon"></i>
-                            <span class="timeline-title">Securing Data in Cloud</span>
-                            <span class="timeline-type">Paper</span>
-                            <i class="fas fa-chevron-down timeline-expand-icon"></i>
-                        </div>
-                        <div class="timeline-content">
-                            <p class="timeline-description">Analysis of data security and privacy challenges in existing
-                                cloud computing ecosystems.</p>
-                            <a href="blog-work/paper_cloud/paper_cloud.html" class="timeline-link">View Details</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-    </main>
-    <script src="assets/js/particles.js"></script>
-    <script src="assets/js/cursor-glow.js"></script>
-    <script src="assets/js/common.js"></script>
-    <script src="assets/js/timeline.js"></script>
-    <script src="assets/js/transitions.js"></script>
+<a class="skip" href="#content">Skip to content</a>
+<header class="top">
+  <nav class="rail" aria-label="Primary">
+    <span class="slot"><a class="back" href="index.html"><span aria-hidden="true">&larr;</span> Home</a></span>
+    <a class="brand" href="index.html" aria-label="Home"><img src="assets/icons/fox.webp" alt="" width="28" height="28"><span class="bl">Home</span></a>
+    <span class="slot"></span>
+  </nav>
+</header>
+<div class="shell">
+<main id="content">
+
+<div class="masthead compact">
+  <div class="crumb"><a href="index.html">Home</a><span class="sep">/</span><span class="mono">Research</span></div>
+  <h1 class="big ink">Research</h1>
+  <p class="pglede ink-dim">Peer-reviewed papers and patents on Infrastructure as Code security, supply-chain integrity and decentralised systems.</p>
+</div>
+
+<section class="slab">
+  <div class="panel rv">
+    <div class="shead"><span class="mono" style="color:var(--gold)">&sect; 01</span><span class="dash"></span><span class="mono">8 papers &amp; patents</span><h2>Research</h2></div>
+    <a class="entry" href="blog-work/paper_ansible_diffusion/paper_ansible_diffusion.html"><span class="yr">Nov 2025</span><h4>Tracking Security Smell Diffusion Patterns</h4><p class="abs">Methodology for detecting security smell diffusion and repository clones in Ansible playbooks using metadata.</p><span class="kind">Paper</span></a><a class="entry" href="blog-work/paper_ansible_metadata/paper_ansible_metadata.html"><span class="yr">Jun 2025</span><h4>Supply-Chain Attack Detection for Ansible</h4><p class="abs">Metadata-assisted detection of supply chain attacks in Infrastructure as Code, focusing on security smells identification.</p><span class="kind">Paper</span></a><a class="entry" href="blog-work/paper_iac_quality/paper_iac_quality.html"><span class="yr">Feb 2025</span><h4>Framework for Measuring IaC Quality</h4><p class="abs">Framework for assessing Infrastructure as Code quality using Ansible Galaxy repositories and code quality metrics.</p><span class="kind">Paper</span></a><a class="entry" href="blog-work/paper_iac/paper_iac.html"><span class="yr">Jul 2023</span><h4>SoK: Static Configuration Analysis in IaC</h4><p class="abs">Systematic review of tools for analyzing Infrastructure as Code scripts, examining static configuration analysis techniques.</p><span class="kind">Paper</span></a><a class="entry" href="blog-work/patent_ipfs/patent_ipfs.html"><span class="yr">Jan 2021</span><h4>Secure Media Streaming Using IPFS</h4><p class="abs">Framework for decentralized media streaming prioritizing user privacy through P2P architecture.</p><span class="kind pt">Patent</span></a><a class="entry" href="blog-work/patent_radio/patent_radio.html"><span class="yr">Dec 2020</span><h4>Secure Radio Communication Using PUFs</h4><p class="abs">Authenticated encrypted radio communication using Physically Unclonable Functions for IIoT.</p><span class="kind pt">Patent</span></a><a class="entry" href="blog-work/paper_ipfs/paper_ipfs.html"><span class="yr">Mar 2018</span><h4>Access Mechanism Using IPFS</h4><p class="abs">PGP-based encryption for secure P2P communication over IPFS network for IoT devices.</p><span class="kind">Paper</span></a><a class="entry" href="blog-work/paper_cloud/paper_cloud.html"><span class="yr">Dec 2017</span><h4>Securing Data in Cloud</h4><p class="abs">Analysis of data security and privacy challenges in existing cloud computing ecosystems.</p><span class="kind">Paper</span></a>
+  </div>
+</section>
+
+</main>
+<footer id="contact">
+  <p class="lets mono">Let's connect!</p>
+  <a class="mail" href="mailto:p.konala.uow@gmail.com">p.konala.uow@gmail.com</a>
+  <div class="links">
+    <a href="https://github.com/PanduKonala" target="_blank" rel="noopener">GitHub</a>
+    <a href="https://www.linkedin.com/in/pandu-konala-179064149/" target="_blank" rel="noopener">LinkedIn</a>
+    <a href="https://app.hackthebox.com/profile/99839" target="_blank" rel="noopener">Hack The Box</a>
+    <a href="assets/files/CV_Konala_Pandu_2026.pdf" target="_blank" rel="noopener">CV</a>
+  </div>
+</footer>
+</div>
+
+<script type="module" src="assets/js/scene.js?v=f9248d45"></script>
 </body>
-
 </html>

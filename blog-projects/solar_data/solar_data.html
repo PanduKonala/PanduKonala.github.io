@@ -1,81 +1,67 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-Z8PFVPLHSL"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-
-      gtag('config', 'G-Z8PFVPLHSL');
-    </script>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="../../assets/css/common.css">
-    <link rel="stylesheet" href="../../assets/css/font-awesome-all.css">
-    <link rel="icon" type="image/x-icon" href="../../assets/icons/favicon.ico">
-    <title>Australian Solar Data Analysis - Pandu Konala</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Australian Solar Data Analysis · Pandu Konala</title>
+<meta name="description" content="Big data analysis of solar power plant performance and affecting factors.">
+<meta name="author" content="Pandu Ranga Reddy Konala">
+<meta property="og:title" content="Australian Solar Data Analysis · Pandu Konala">
+<meta property="og:description" content="Big data analysis of solar power plant performance and affecting factors.">
+<meta property="og:type" content="website">
+<link rel="icon" href="../../assets/icons/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="../../assets/icons/favicon-32x32.png">
+<link rel="apple-touch-icon" href="../../assets/icons/apple-touch-icon.png">
+<link rel="stylesheet" href="../../assets/css/noir.css?v=8df2095a">
 </head>
-<body class="theme-red">
-    <header class="minimal-header">
-        <a href="../../index.html" class="logo-link"><img src="../../assets/icons/fox.webp" alt="Logo" class="logo"></a>
-    </header>
-    <main>
-        <div class="detail-page">
-            <div class="detail-container">
-                <div class="detail-left">
-                    <h1>Australian Solar Data Analysis</h1>
-                    <span class="detail-badge">Analysis Project</span>
-                    <div class="detail-meta">
-                        <div class="meta-item"><span class="meta-label">Fields</span><span class="meta-value">Big Data Analytics</span></div>
-                        <div class="meta-item"><span class="meta-label">Timeline</span><span class="meta-value">January 2, 2018 - March 23, 2018</span></div>
-                        <div class="meta-item"><span class="meta-label">Status</span><span class="meta-value">Completed</span></div>
-                        <div class="meta-item"><span class="meta-label">Team</span><span class="meta-value">Pandu RR Konala</span><span class="meta-value">D.Arvind Sai</span><span class="meta-value">K.Sai Chaitanya</span></div>
-                        <div class="meta-item"><span class="meta-label">Tools</span><span class="meta-value">MongoDB</span><span class="meta-value">Microsoft Excel</span></div>
-                    </div>
-                    <div class="back-nav"><a href="../../projects.html" class="back-btn">Back to Projects</a></div>
-                </div>
-                <div class="detail-right">
-                    <div class="detail-section" style="text-align: left;">
-                        <h2>Overview</h2>
-                        <p>To analyze various types of data concerning solar power plants and the factors which affect them. Through Big Data procedures this is made possible to break down the causes of uproar in the services of the solar power plant and reveal some thought-provoking actualities.</p>
-                    </div>
-                    <div class="detail-section" style="text-align: left;">
-                        <h2>Motivation</h2>
-                        <p>Most countries around the world have high ambitions in terms of the deployment and integration of renewable energy generation capacities. Power systems and electricity markets were originally designed for conventional and centralized power generation, while near-future systems are set to rely on distributed and non-dispatchable generation. This introduces substantial challenges in operation and data analysis.</p>
-                    </div>
-                    <div class="detail-section" style="text-align: left;">
-                        <h2>Key Findings</h2>
-                        <ul>
-                            <li>Power Generation is Proportional to Wind Speed</li>
-                            <li>Power Generation is Proportional to Radiation</li>
-                            <li>Power Generation is Inversely Proportional to Humidity</li>
-                            <li>Power Generation is Inversely Proportional to Rainfall</li>
-                        </ul>
-                    </div>
-                    <div class="detail-section" style="text-align: left;">
-                        <h2>Data Statistics</h2>
-                        <ul>
-                            <li>Maximum temperature recorded: 51.26°C</li>
-                            <li>Maximum Humidity: 102.89 g/m³</li>
-                            <li>Maximum global horizontal radiation: 2725.60 W/m²</li>
-                            <li>Maximum Rainfall: 67.199 mm</li>
-                            <li>Maximum wind speed: 54.39 Kmph</li>
-                            <li>Active power peak: 3.67kW</li>
-                        </ul>
-                    </div>
-                    <div class="detail-section" style="text-align: center;">
-                        <h2>View on GitHub</h2>
-                        <p><a href="https://github.com/PanduKonala/Australian-Solar-Data-Analysis" target="_blank" class="btn">Click here</a></p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </main>
-    <script src="../../assets/js/particles.js"></script>
-    <script src="../../assets/js/cursor-glow.js"></script>
-    <script src="../../assets/js/common.js"></script>
-    <script src="../../assets/js/transitions.js"></script>
+<body data-page="detail">
+<canvas id="sky"></canvas><div class="vig"></div><div class="grain"></div>
+<div class="bar t"></div><div class="bar b"></div>
+<nav class="bgsw" id="bgsw"><span class="lbl">Sky</span><a data-t="now">Now</a><a data-t="6.3">Dawn</a><a data-t="12">Day</a><a data-t="18.3">Dusk</a><a data-t="23">Night</a></nav>
+
+<a class="skip" href="#content">Skip to content</a>
+<header class="top">
+  <nav class="rail" aria-label="Primary">
+    <span class="slot"><a class="back" href="../../projects.html"><span aria-hidden="true">&larr;</span> Projects</a></span>
+    <a class="brand" href="../../index.html" aria-label="Home"><img src="../../assets/icons/fox.webp" alt="" width="28" height="28"><span class="bl">Home</span></a>
+    <span class="slot"></span>
+  </nav>
+</header>
+<div class="shell">
+<main id="content">
+
+<div class="masthead compact">
+  <div class="crumb">
+    <a href="../../index.html">Home</a><span class="sep">/</span>
+    <a href="../../projects.html">Projects</a>
+  </div>
+  <h1 class="big title ink">Australian Solar Data Analysis</h1>
+</div>
+
+<section class="slab">
+  <div class="panel detail">
+    <div class="aside">
+      <span class="badge ">Analysis Project</span>
+      <div class="facts"><div class="f"><span class="k">Fields</span><span class="v">Big Data Analytics</span></div><div class="f"><span class="k">Timeline</span><span class="v">January 2, 2018 - March 23, 2018</span></div><div class="f"><span class="k">Status</span><span class="v">Completed</span></div><div class="f"><span class="k">Team</span><span class="v">Pandu RR Konala</span><span class="v">D.Arvind Sai</span><span class="v">K.Sai Chaitanya</span></div><div class="f"><span class="k">Tools</span><span class="v">MongoDB</span><span class="v">Microsoft Excel</span></div></div>
+      <p style="margin-top:22px"><a class="btn" href="../../projects.html">&larr; All projects</a></p>
+    </div>
+    <div class="prose"><section><h2>Overview</h2><p>To analyze various types of data concerning solar power plants and the factors which affect them. Through Big Data procedures this is made possible to break down the causes of uproar in the services of the solar power plant and reveal some thought-provoking actualities.</p></section><section><h2>Motivation</h2><p>Most countries around the world have high ambitions in terms of the deployment and integration of renewable energy generation capacities. Power systems and electricity markets were originally designed for conventional and centralized power generation, while near-future systems are set to rely on distributed and non-dispatchable generation. This introduces substantial challenges in operation and data analysis.</p></section><section><h2>Key Findings</h2><ul> <li>Power Generation is Proportional to Wind Speed</li> <li>Power Generation is Proportional to Radiation</li> <li>Power Generation is Inversely Proportional to Humidity</li> <li>Power Generation is Inversely Proportional to Rainfall</li> </ul></section><section><h2>Data Statistics</h2><ul> <li>Maximum temperature recorded: 51.26°C</li> <li>Maximum Humidity: 102.89 g/m³</li> <li>Maximum global horizontal radiation: 2725.60 W/m²</li> <li>Maximum Rainfall: 67.199 mm</li> <li>Maximum wind speed: 54.39 Kmph</li> <li>Active power peak: 3.67kW</li> </ul></section><section><h2>View on GitHub</h2><p><a href="https://github.com/PanduKonala/Australian-Solar-Data-Analysis" target="_blank" class="btn">Click here</a></p></section></div>
+  </div>
+</section>
+
+</main>
+<footer id="contact">
+  <p class="lets mono">Let's connect!</p>
+  <a class="mail" href="mailto:p.konala.uow@gmail.com">p.konala.uow@gmail.com</a>
+  <div class="links">
+    <a href="https://github.com/PanduKonala" target="_blank" rel="noopener">GitHub</a>
+    <a href="https://www.linkedin.com/in/pandu-konala-179064149/" target="_blank" rel="noopener">LinkedIn</a>
+    <a href="https://app.hackthebox.com/profile/99839" target="_blank" rel="noopener">Hack The Box</a>
+    <a href="../../assets/files/CV_Konala_Pandu_2026.pdf" target="_blank" rel="noopener">CV</a>
+  </div>
+</footer>
+</div>
+
+<script type="module" src="../../assets/js/scene.js?v=f9248d45"></script>
 </body>
 </html>

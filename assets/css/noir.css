@@ -1,0 +1,389 @@
+
+:root{
+  --bg:#04060a; --bg-2:#080c14;
+  --gold:#d9a83a; --gold-2:#f3cd6e; --cyan:#4fd1c5;
+  --fg:#ecefF4; --dim:rgba(236,239,244,.62); --faint:rgba(236,239,244,.32);
+  --line:rgba(236,239,244,.10); --line-2:rgba(236,239,244,.18);
+  --mono:ui-monospace,'SF Mono',Menlo,monospace;
+  --serif:'Iowan Old Style','Palatino Linotype',Palatino,Georgia,serif;
+  --max:1240px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--fg);font-family:var(--serif);font-size:17px;line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+.disp{font-family:var(--mono)}
+.mono{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint)}
+
+/* the sky fills the LARGE viewport (behind a collapsing mobile address bar) so its buffer never resizes on scroll.
+   The gradient is what shows if WebGL never starts. */
+canvas#sky{position:fixed;top:0;left:0;width:100vw;width:100lvw;height:100vh;height:100lvh;z-index:0;display:block;
+  background:linear-gradient(180deg,#160f2b 0%,#b8563a 58%,#2e2748 100%)}
+.vig{position:fixed;inset:0;z-index:1;pointer-events:none;--vk:1;
+  background:radial-gradient(75% 62% at 20% 76%,rgba(4,6,10,calc(.80*var(--vk))) 0%,rgba(4,6,10,calc(.35*var(--vk))) 45%,transparent 72%),
+             linear-gradient(180deg,rgba(4,6,10,calc(.42*var(--vk))) 0%,transparent 20%,transparent 70%,rgba(4,6,10,calc(.30*var(--vk))) 100%),
+             radial-gradient(130% 90% at 50% 45%,transparent 58%,rgba(4,6,10,calc(.55*var(--vk))) 100%)}
+.grain{position:fixed;inset:0;z-index:2;pointer-events:none;opacity:.05;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E")}
+/* letterbox reveal */
+.bar{position:fixed;left:0;right:0;height:50vh;background:#000;z-index:40;pointer-events:none;animation:bar 1.5s cubic-bezier(.7,0,.2,1) .35s forwards}
+.bar.t{top:0;transform-origin:top}.bar.b{bottom:0;transform-origin:bottom}
+@keyframes bar{to{transform:scaleY(0)}}
+
+.shell{position:relative;z-index:3;max-width:var(--max);margin:0 auto;padding:0 clamp(18px,4vw,48px)}
+
+/* header: transparent bar, fox centred, back link on the left. On pages that
+   scroll it picks up the glass once content moves under it (.scrolled, set in JS). */
+:root{--top-h:calc(78px + env(safe-area-inset-top,0px))}
+header.top{padding-top:env(safe-area-inset-top,0px)}
+header.top{position:sticky;top:0;z-index:30;height:var(--top-h);background:transparent;border-bottom:1px solid transparent;
+  transition:background .35s ease,border-color .35s ease}
+header.top.scrolled{background:rgba(8,11,18,.55);border-bottom-color:var(--glass-edge);
+  -webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur)}
+header.top .rail{height:100%;max-width:var(--max);margin:0 auto;padding:0 clamp(14px,4vw,48px);
+  display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:12px}
+header.top .slot{display:flex;align-items:center}
+header.top .slot:last-child{justify-content:flex-end}
+header.top .brand{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;padding:6px 16px;text-decoration:none}
+header.top .brand .bl{font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--dim);text-shadow:0 1px 8px rgba(2,5,9,.6);transition:color .25s}
+header.top .brand:hover .bl{color:var(--gold-2)}
+header.top .brand img{height:30px;width:30px;filter:drop-shadow(0 0 10px rgba(217,168,58,.45));transition:transform .35s cubic-bezier(.2,.8,.2,1)}
+header.top .brand:hover img{transform:translateY(-2px) scale(1.06)}
+header.top .back{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--dim);text-decoration:none;padding:10px 12px 10px 0;position:relative;text-shadow:0 1px 8px rgba(2,5,9,.6);transition:color .25s}
+header.top .back span{display:inline-block;transition:transform .3s cubic-bezier(.2,.8,.2,1)}
+header.top .back:hover{color:var(--gold-2)}
+header.top .back:hover span{transform:translateX(-4px)}
+header.top .rail a:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+
+
+/* masthead */
+.masthead{min-height:calc(100svh - var(--top-h));display:flex;flex-direction:column;justify-content:flex-end;padding:60px 0 46px;border-bottom:1px solid var(--line-2)}
+.kicker{display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:22px;opacity:0;animation:up 1s 1.1s forwards}
+.kicker .mono{color:var(--gold)}
+h1.big{font-family:var(--mono);font-weight:500;text-transform:uppercase;letter-spacing:.06em;font-size:clamp(2.2rem,8vw,6.4rem);line-height:1.02;margin-left:0;
+  text-shadow:0 20px 60px rgba(0,0,0,.6)}
+h1.big span{display:inline-block;opacity:0;transform:translateY(.25em);animation:letter .9s cubic-bezier(.2,.8,.2,1) forwards}
+h1.big .br{display:block;height:0}
+.sub{display:grid;grid-template-columns:1.4fr 1fr;gap:clamp(20px,5vw,60px);align-items:end;padding-top:34px;opacity:0;animation:up 1.1s 1.7s forwards}
+.sub p.lede{font-size:clamp(1.05rem,2.2vw,1.45rem);line-height:1.4;max-width:34ch;color:var(--fg)}
+.sub p.lede em{font-style:normal;color:var(--gold-2)}
+.meta{border-left:1px solid var(--line-2);padding-left:22px}
+.meta div{display:flex;justify-content:space-between;gap:14px;padding:7px 0;border-bottom:1px dotted var(--line);font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}
+.meta div span:last-child{color:var(--fg);text-align:right}
+@keyframes letter{to{opacity:1;transform:none}}
+@keyframes up{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+
+/* doors: a compact menu strip, three across */
+.doors{display:grid;grid-template-columns:repeat(3,1fr);border-bottom:1px solid var(--line-2)}
+.door{display:grid;grid-template-columns:auto 1fr auto;grid-template-areas:"no title arr" "no cta arr";column-gap:16px;row-gap:4px;align-items:center;
+  padding:clamp(16px,2.4vh,24px) clamp(16px,2.2vw,28px);border-right:1px solid var(--line);text-decoration:none;color:inherit;position:relative;
+  transition:background .35s,transform .35s cubic-bezier(.2,.8,.2,1)}
+.door:last-child{border-right:0}
+.door::after{content:'';position:absolute;left:0;right:0;bottom:0;height:2px;background:var(--gold);transform:scaleX(0);transform-origin:left;transition:transform .5s cubic-bezier(.2,.8,.2,1)}
+.door:hover{background:rgba(255,255,255,.06);transform:translateY(-2px)}
+.door:hover::after{transform:none}
+.door .dno{grid-area:no;color:var(--gold);letter-spacing:.22em;font-size:10px;align-self:start;padding-top:3px}
+.door h3{grid-area:title;font-family:var(--mono);font-weight:500;text-transform:uppercase;font-size:clamp(.85rem,1.3vw,1.05rem);letter-spacing:.18em;margin:0}
+.door em{grid-area:cta;font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);font-style:normal;transition:.3s}
+.door .arr{grid-area:arr;font-family:var(--mono);font-size:1rem;color:var(--faint);transition:transform .3s cubic-bezier(.2,.8,.2,1),color .3s}
+.door:hover em{color:var(--gold-2)}
+.door:hover .arr{color:var(--gold-2);transform:translateX(4px)}
+
+/* sections */
+section{padding:clamp(60px,8vw,110px) 0;border-bottom:1px solid var(--line-2)}
+.shead{display:grid;grid-template-columns:auto 1fr auto auto;gap:22px;align-items:center;margin-bottom:34px}
+.shead h2{font-family:var(--mono);font-weight:500;text-transform:uppercase;font-size:clamp(1rem,2.1vw,1.45rem);letter-spacing:.16em}
+.shead .dash{height:1px;background:var(--line)}
+.shead canvas{width:180px;height:72px;display:block;opacity:.9}
+.entry{display:grid;grid-template-columns:88px 1fr minmax(0,34ch) 92px;gap:clamp(14px,3vw,34px);align-items:start;
+  padding:20px 12px 20px 0;border-top:1px solid var(--line);text-decoration:none;color:inherit;position:relative;transition:.35s}
+.entry::before{content:'';position:absolute;inset:0 -14px;background:linear-gradient(90deg,rgba(217,168,58,.08),transparent 60%);opacity:0;transition:.35s;z-index:-1}
+.entry:hover{padding-left:14px}.entry:hover::before{opacity:1}
+.entry .yr{font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:var(--faint);padding-top:5px}
+.entry h4{font-family:var(--mono);font-weight:500;font-size:clamp(.9rem,1.5vw,1.02rem);letter-spacing:.02em;line-height:1.45;transition:.3s}
+.entry:hover h4{color:var(--gold-2)}
+.entry .abs{color:var(--dim);font-size:.9rem;line-height:1.55}
+.entry .kind{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;text-align:right;padding-top:5px;color:var(--cyan)}
+.entry .kind.pt{color:var(--gold)}
+
+/* about */
+.bio{display:grid;grid-template-columns:1fr minmax(0,1.35fr);gap:clamp(24px,5vw,64px)}
+.bio figure img{width:100%;height:auto;aspect-ratio:1/1;object-fit:cover;border:1px solid var(--line-2)}
+.bio figure figcaption{margin-top:10px}
+.bio p{margin-bottom:16px;color:var(--dim)}
+.bio p:first-of-type::first-letter{font-family:var(--mono);font-weight:500;float:left;font-size:3.6rem;line-height:.78;padding:6px 10px 0 0;color:var(--gold)}
+.ledger{margin:26px 0;border-top:1px solid var(--line-2);border-bottom:1px solid var(--line-2)}
+.ledger div{display:flex;justify-content:space-between;gap:16px;padding:9px 0;border-bottom:1px dotted var(--line);font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
+.ledger div:last-child{border-bottom:0}.ledger b{color:var(--fg);font-family:var(--mono);font-weight:500;letter-spacing:.06em}
+a.cv{display:inline-block;font-family:var(--mono);font-size:11px;letter-spacing:.22em;text-transform:uppercase;border:1px solid var(--gold);padding:13px 26px;color:var(--gold-2);text-decoration:none;transition:.3s}
+a.cv:hover{background:var(--gold);color:#06080c}
+
+footer{padding:clamp(60px,8vw,100px) 0 calc(46px + env(safe-area-inset-bottom,0px));text-align:center;text-shadow:0 1px 10px rgba(2,5,9,.6)}
+footer .lets{margin-bottom:16px;color:var(--gold)}
+footer a.mail{font-family:var(--mono);font-weight:500;font-size:clamp(1rem,2.6vw,1.6rem);color:var(--fg);text-decoration:none;letter-spacing:.06em;border-bottom:1px solid var(--gold)}
+footer a.mail:hover{color:var(--gold-2)}
+.links{display:flex;flex-wrap:wrap;justify-content:center;gap:12px 24px;margin-top:32px}
+.links a{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);text-decoration:none;border-bottom:1px solid var(--line);padding-bottom:3px}
+.links a:hover{color:var(--gold-2);border-color:var(--gold)}
+
+.rv{opacity:0;transform:translateY(22px)}
+.rv.in{opacity:1;transform:none;transition:.9s cubic-bezier(.2,.8,.2,1)}
+@media(max-width:900px){.sub,.bio{grid-template-columns:1fr}.doors{grid-template-columns:1fr}.door{border-right:0;border-bottom:1px solid var(--line)}.door:last-child{border-bottom:0}
+  .entry{grid-template-columns:1fr;gap:6px}.entry .kind{text-align:left}.shead{grid-template-columns:auto 1fr auto}.shead canvas{display:none}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.rv,.kicker,.sub,h1.big span{opacity:1;transform:none}.bar{display:none}}
+
+/* sky switcher: kept in the markup (the ?t= links still work for testing) but hidden from the UI */
+.bgsw{display:none!important}
+.bgsw{position:absolute;right:18px;top:calc(var(--top-h) + 14px);align-items:center;z-index:50;display:flex;gap:4px;padding:4px;border:1px solid var(--glass-edge);background:var(--panel);-webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);box-shadow:var(--glass-hi)}
+.bgsw .lbl{font-family:var(--mono);font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--faint);padding:0 8px}
+.bgsw a{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);text-decoration:none;padding:8px 12px;transition:.25s}
+.bgsw a:hover{color:var(--fg)}.bgsw a.on{background:var(--gold);color:#06080c}
+
+/* ============================================================================
+   NOIR ADDITIONS
+   1. scene.js writes --dayK (0 = night .. 1 = noon) on <html>; the bright
+      hours use it to fade in a dark scrim behind the hero text.
+   2. dark panels: everything below the hero sits on a solid scrim.
+   3. inner pages + detail pages.
+   ========================================================================== */
+:root{
+  --dayK:0;                        /* set by scene.js */
+  --ink:#08120f;                   /* the dark end of the day-aware ramp */
+  /* simple glass: one clear tint, strong blur, thin light edge */
+  --panel:rgba(10,14,22,.42);
+  --panel-2:rgba(12,16,26,.38);
+  --glass-blur:blur(22px) saturate(1.35);
+  --glass-edge:rgba(255,255,255,.10);
+  --glass-hi:inset 0 1px 0 rgba(255,255,255,.07);
+}
+.ink        {color:var(--fg)}
+.ink-dim    {color:var(--dim)}
+/* hero type uses the ramp; its shadow flips from dark-glow to light-halo so the
+   glyph edges stay separated from the terrain at both ends of the day. */
+h1.big{text-shadow:0 18px 50px rgba(2,5,9,.72),0 2px 14px rgba(2,5,9,.55)}
+.sub p.lede em{color:var(--gold-2)}
+.meta div span:last-child{color:inherit}
+
+/* ---- panels: below the hero nothing floats over bare terrain ---- */
+.panel{background:var(--panel);-webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);border:1px solid var(--glass-edge);box-shadow:var(--glass-hi),0 30px 80px -30px rgba(0,0,0,.6);
+  border-radius:2px;padding:clamp(20px,3.4vw,40px)}
+section.slab{border-bottom:0;padding:clamp(34px,5vw,64px) 0}
+section.slab>.panel{margin-top:8px}
+.doors{background:var(--panel-2);-webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);box-shadow:var(--glass-hi)}
+
+
+/* ---- inner pages ---- */
+.masthead.compact{min-height:auto;padding:clamp(52px,9vw,110px) 0 clamp(26px,4vw,44px)}
+.masthead.compact h1.big{font-size:clamp(1.7rem,5.2vw,3.8rem)}
+.crumb{display:flex;gap:14px;align-items:center;margin-bottom:18px}
+.crumb a{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--gold);text-decoration:none;border-bottom:1px solid transparent;transition:.25s}
+.crumb a:hover{border-bottom-color:var(--gold)}
+.crumb .sep{color:var(--faint);font-family:var(--mono);font-size:11px}
+.pglede{font-family:var(--serif);font-size:clamp(1.05rem,1.9vw,1.3rem);max-width:46ch;margin-top:18px}
+
+/* ---- about page blocks ---- */
+.about-grid{display:grid;grid-template-columns:1fr minmax(0,1.35fr);gap:clamp(24px,5vw,64px);align-items:start}
+.about-grid figure img{width:100%;height:auto;aspect-ratio:1/1;object-fit:cover;border:1px solid var(--line-2)}
+.pillars{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);margin-top:8px}
+.panel .pillars{margin-top:0}
+.panel .pillar{background:transparent;border:0;box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none;background:rgba(255,255,255,.02)}
+.pillar{background:var(--panel);-webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);border:1px solid var(--glass-edge);box-shadow:var(--glass-hi);padding:24px 22px}
+.pillar h4{font-family:var(--mono);font-weight:500;text-transform:uppercase;font-size:.85rem;letter-spacing:.16em;
+  letter-spacing:.04em;margin-bottom:10px;color:var(--gold-2)}
+.pillar p{color:var(--dim);font-size:.92rem}
+.tl{border-top:1px solid var(--line-2)}
+.tl .row{display:grid;grid-template-columns:132px 1fr auto;gap:clamp(12px,2.6vw,28px);
+  padding:16px 0;border-bottom:1px solid var(--line);align-items:baseline}
+.tl .row .when{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold)}
+.tl .row h4{font-family:var(--mono);font-weight:500;font-size:.92rem;letter-spacing:.03em}
+.tl .row .where{color:var(--dim);font-size:.9rem;margin-top:3px}
+.tl .row .tag{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--faint);text-align:right;white-space:nowrap}
+.tl .row a{color:var(--cyan);text-decoration:none;border-bottom:1px solid rgba(79,209,197,.4)}
+.subhead{font-family:var(--mono);font-weight:500;text-transform:uppercase;letter-spacing:.18em;
+  font-size:.86rem;color:var(--gold);margin:34px 0 12px}
+.subhead:first-child{margin-top:0}
+
+/* ---- detail pages ---- */
+.detail{display:grid;grid-template-columns:minmax(0,320px) minmax(0,1fr);gap:clamp(22px,4vw,54px);align-items:start}
+.detail .aside{position:sticky;top:96px}
+.badge{display:inline-block;font-family:var(--mono);font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;
+  border:1px solid var(--gold);color:var(--gold-2);padding:7px 12px;margin-bottom:20px}
+.badge.pt{border-color:var(--cyan);color:var(--cyan)}
+.facts{border-top:1px solid var(--line-2)}
+.facts .f{padding:11px 0;border-bottom:1px dotted var(--line)}
+.facts .f .k{display:block;font-family:var(--mono);font-size:9.5px;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--faint);margin-bottom:4px}
+.facts .f .v{display:block;font-size:.93rem;color:var(--fg);line-height:1.45}
+.facts .f .v+.v{margin-top:3px;color:var(--dim)}
+.prose h2{font-family:var(--mono);font-weight:500;text-transform:uppercase;letter-spacing:.18em;
+  font-size:clamp(1rem,2.1vw,1.22rem);color:var(--gold-2);margin:0 0 12px}
+.prose section{border-bottom:1px solid var(--line);padding:0 0 26px;margin-bottom:26px}
+.prose section:last-child{border-bottom:0;margin-bottom:0;padding-bottom:0}
+.prose p{color:var(--dim);margin-bottom:12px}
+.prose p:last-child{margin-bottom:0}
+.prose ul,.prose ol{color:var(--dim);margin:0 0 12px 1.1em}
+.prose li{margin-bottom:7px}
+a.btn{display:inline-block;font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;
+  border:1px solid var(--gold);padding:13px 24px;color:var(--gold-2);text-decoration:none;transition:.3s}
+a.btn:hover{background:var(--gold);color:#06080c}
+
+/* ---- 404 ---- */
+.oops{min-height:calc(100svh - var(--top-h));display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;gap:22px}
+.oops .code{font-family:var(--mono);font-weight:500;font-size:clamp(4rem,18vw,12rem);line-height:.9;letter-spacing:.04em}
+
+@media(max-width:900px){
+  .detail,.about-grid{grid-template-columns:1fr}
+  .detail .aside{position:static}
+  .pillars{grid-template-columns:1fr}
+  .tl .row{grid-template-columns:1fr;gap:4px}
+  .tl .row .tag{text-align:left}
+}
+@media print{canvas#sky,.vig,.grain,.bgsw,.bar{display:none}body{background:#fff;color:#111}}
+
+/* ----------------------------------------------------------------------------
+   contrast pass: at noon the vignette is dialled down, so the hero and the
+   section heads lost their dark backing. Give the text itself a scrim and put
+   every floating label on the same day-aware ramp.
+   -------------------------------------------------------------------------- */
+
+/* hero labels */
+.kicker .mono{color:var(--gold)}
+.sub p.lede{color:var(--fg)}
+.meta div,.meta div span:last-child{color:var(--faint)}
+.shead h2,.shead .mono,.shead span{color:var(--fg)}
+.crumb .sep,.pglede{color:var(--dim)}
+/* the § marker and the dash keep their own colours */
+.shead .dash{background:var(--line)}
+.meta div{border-bottom-color:var(--line)}
+
+/* the section head now lives INSIDE the panel, so it inherits the dark plate and
+   needs no scrim of its own. Reset the day-ramp for anything on a panel. */
+.panel .shead{margin:0 0 22px;padding:0 0 18px;border-bottom:1px solid var(--line)}
+.panel .shead h2,.panel .shead .mono,.panel .shead span:not(.dash){color:var(--fg)}
+.panel .shead .mono,.panel .shead span.mono{color:var(--dim)}
+.panel .shead .dash{background:var(--line)}
+.panel .shead canvas{opacity:.9}
+
+/* the hero ledger keeps a dark plate at every hour: mono type at 11px is too
+   fine to survive a bright background even on the ink ramp. */
+.meta{background:var(--panel);-webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);border:1px solid var(--glass-edge);box-shadow:var(--glass-hi);padding:14px 18px;
+  border-left:1px solid var(--line-2)}
+.meta div,.meta div span:last-child{color:var(--faint)}
+.meta div span:last-child{color:var(--fg)}
+
+/* inner-page lede follows the ink ramp */
+.pglede{color:var(--dim)}
+/* the second kicker line: same ramp, no inline colour */
+.kicker .tag{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}
+
+/* a head placed inside a grid panel must span every column */
+.panel.about-grid .shead,.panel.detail .shead{grid-column:1/-1}
+
+/* a paper title is a sentence, not a wordmark: cap it and let it wrap normally */
+.masthead.compact h1.big.title{font-size:clamp(1.1rem,2.2vw,1.6rem);line-height:1.4;letter-spacing:.03em;text-transform:none;
+  max-width:34ch;margin-left:0}
+/* the shead already draws a rule; the first entry must not draw a second */
+.panel .shead+.entry{border-top:0}
+
+/* ============================================================================
+   DAY LEGIBILITY, take 2: the type stays light at every hour. Instead of
+   darkening the font, the bright hours get a soft DARK scrim behind the text,
+   so white reads cleanly over a sunlit valley without changing colour.
+   scene.js supplies --dayK (0 at night, 1 at noon).
+   ========================================================================== */
+.ink,.ink-dim,.sub p.lede,.meta div span:last-child,.shead h2,.oops .code{color:var(--fg)}
+.ink-dim,.pglede,.crumb .sep{color:var(--dim)}
+.kicker .mono{color:var(--gold)}
+.kicker .tag{color:var(--dim)}
+.crumb a{color:var(--gold)}
+
+.masthead{position:relative;isolation:isolate}
+.oops{position:relative;isolation:isolate}
+
+/* a touch more weight on the big type so it holds its own against the scrim */
+h1.big{text-shadow:0 18px 50px rgba(2,5,9,.78),0 2px 16px rgba(2,5,9,.62)}
+.pglede,.sub p.lede{text-shadow:0 1px 10px rgba(2,5,9,calc(.30 + var(--dayK)*.45))}
+.kicker span{text-shadow:0 1px 8px rgba(2,5,9,calc(.35 + var(--dayK)*.45))}
+.crumb a,.crumb .sep,.crumb .mono{text-shadow:0 1px 8px rgba(2,5,9,calc(.35 + var(--dayK)*.45))}
+
+/* keyboard users get a way past the nav; invisible until focused */
+.skip{position:fixed;left:12px;top:-60px;z-index:99;padding:9px 14px;background:var(--gold);color:#0b0d12;
+  font:600 13px/1 var(--mono);letter-spacing:.06em;text-transform:uppercase;transition:top .18s}
+.skip:focus{top:12px;outline:2px solid #fff;outline-offset:2px}
+main{display:block}
+
+/* small screens: bar stays, brand wordmark + location go, nav becomes a scrollable strip */
+@media(max-width:900px){
+  header.top .rail{padding:0 10px}
+  header.top .back{font-size:10px;letter-spacing:.12em}
+  .masthead.compact{padding-top:84px}
+}
+@media(max-width:600px){
+  .bgsw{right:10px;top:calc(var(--top-h) + 6px);gap:0;padding:2px}
+  .bgsw .lbl{display:none}
+  .bgsw a{padding:10px 8px;font-size:9px;letter-spacing:.1em}
+  .kicker .mono,.kicker .tag{font-size:10px;letter-spacing:.12em}
+  body[data-page="home"] .masthead h1.big{font-size:clamp(2.4rem,min(13vw,9vh),4rem)}
+}
+/* tablets: keep the three doors on one line without the count wrapping */
+@media(max-width:1024px){
+  .door{column-gap:12px}
+  .door em{font-size:9px;letter-spacing:.1em;white-space:nowrap}
+}
+/* touch devices: the grain overlay and heavy blur are GPU work on every scroll frame */
+@media(pointer:coarse){
+  .grain{display:none}
+  :root{--glass-blur:blur(14px) saturate(1.3)}
+}
+/* browsers without svh units */
+@supports not (height:100svh){
+  .masthead,.oops{min-height:calc(100vh - var(--top-h))}
+  body[data-page="home"] .shell{min-height:calc(100vh - var(--top-h))}
+}
+
+/* ============================================================
+   HOME: one screen, no scroll. header + masthead + doors fill
+   the viewport exactly; the footer collapses to a thin strip.
+   ============================================================ */
+body[data-page="home"] .shell{min-height:calc(100svh - var(--top-h));display:flex;flex-direction:column}
+/* .masthead and .doors live inside <main>, so main is the flex child that grows */
+body[data-page="home"] #content{flex:1 1 auto;min-height:0;display:flex;flex-direction:column}
+body[data-page="home"] .masthead{flex:1 1 auto;min-height:0;justify-content:center;padding:clamp(20px,4vh,54px) 0 clamp(16px,3vh,34px);border-bottom:0}
+body[data-page="home"] h1.big{font-size:clamp(1.9rem,min(7.5vw,11vh),5.6rem)}
+body[data-page="home"] .doors{flex:0 0 auto;border-top:1px solid var(--line-2)}
+body[data-page="home"] footer{flex:0 0 auto;padding:clamp(14px,2.4vh,26px) 0 calc(clamp(14px,2.4vh,26px) + env(safe-area-inset-bottom,0px))}
+body[data-page="home"] footer .lets{display:none}
+body[data-page="home"] footer a.mail{font-size:clamp(1rem,2.4vw,1.5rem);border-bottom-width:1px}
+body[data-page="home"] .links{margin-top:14px;gap:18px}
+/* Home keeps its three columns well below the site-wide 900px breakpoint,
+   because stacking them is what would force a scrollbar. */
+@media(min-width:601px){
+  body[data-page="home"] .doors{grid-template-columns:repeat(3,1fr)}
+  body[data-page="home"] .door{border-right:1px solid var(--line);border-bottom:0}
+  body[data-page="home"] .door:last-child{border-right:0}
+}
+/* lock the scrollbar away once there is genuinely room for one screen */
+@media(min-width:601px) and (min-height:620px){
+  body[data-page="home"]{overflow:hidden}
+  body[data-page="home"] .shell{height:calc(100svh - var(--top-h));min-height:0}
+  body[data-page="home"] .masthead{overflow:hidden}
+}
+
+
+/* the right-hand tagline sits over the brightest part of the day sky, so it
+   blends from pale grey (night) to near-black ink as --dayK rises. Fallback
+   first for engines without color-mix. */
+.kicker .tag{color:var(--dim)}
+@supports(color:color-mix(in srgb,#000 50%,#fff)){
+  .kicker .tag{color:color-mix(in srgb,#0a0d14 calc(var(--highK,0)*100%),var(--dim));
+    text-shadow:0 1px 6px rgba(255,255,255,calc(var(--highK,0)*.35))}
+}
+
+@supports not (backdrop-filter:blur(1px)){
+  .panel,.doors,.meta,.bgsw,.pillar{background:rgba(8,11,18,.94)}
+  header.top.scrolled{background:rgba(6,8,13,.96)}
+}
+
+.panel .pillar{background:rgba(255,255,255,.02);-webkit-backdrop-filter:none;backdrop-filter:none;border:0;box-shadow:none}

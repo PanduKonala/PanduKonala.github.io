@@ -1,62 +1,67 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-Z8PFVPLHSL"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-
-      gtag('config', 'G-Z8PFVPLHSL');
-    </script>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="../../assets/css/common.css">
-    <link rel="stylesheet" href="../../assets/css/font-awesome-all.css">
-    <link rel="icon" type="image/x-icon" href="../../assets/icons/favicon.ico">
-    <title>IPFS Access Mechanism Paper - Pandu Konala</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Access Mechanism Using InterPlanetary File System · Pandu Konala</title>
+<meta name="description" content="PGP-based encryption for secure P2P communication over IPFS network for IoT devices.">
+<meta name="author" content="Pandu Ranga Reddy Konala">
+<meta property="og:title" content="Access Mechanism Using InterPlanetary File System · Pandu Konala">
+<meta property="og:description" content="PGP-based encryption for secure P2P communication over IPFS network for IoT devices.">
+<meta property="og:type" content="website">
+<link rel="icon" href="../../assets/icons/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="../../assets/icons/favicon-32x32.png">
+<link rel="apple-touch-icon" href="../../assets/icons/apple-touch-icon.png">
+<link rel="stylesheet" href="../../assets/css/noir.css?v=8df2095a">
 </head>
-<body class="theme-green">
-    <header class="minimal-header">
-        <a href="../../index.html" class="logo-link"><img src="../../assets/icons/fox.webp" alt="Logo" class="logo"></a>
-    </header>
-    <main>
-        <div class="detail-page">
-            <div class="detail-container">
-                <div class="detail-left">
-                    <h1>Access Mechanism Using InterPlanetary File System</h1>
-                    <span class="detail-badge">Peer-Reviewed Research Paper</span>
-                    <div class="detail-meta">
-                        <div class="meta-item"><span class="meta-label">Journal</span><span class="meta-value">International Journal of Engineering & Technology, UAE</span></div>
-                        <div class="meta-item"><span class="meta-label">ISSN</span><span class="meta-value">2227-524X</span></div>
-                        <div class="meta-item"><span class="meta-label">Publication Date</span><span class="meta-value">March 2018</span></div>
-                        <div class="meta-item"><span class="meta-label">Status</span><span class="meta-value">Published</span></div>
-                        <div class="meta-item"><span class="meta-label">Field</span><span class="meta-value">Peer-to-Peer Networks</span></div>
-                        <div class="meta-item"><span class="meta-label">Authors</span><span class="meta-value">Pandu Ranga Reddy Konala</span><span class="meta-value">V. Sai Abhinav Reddy</span><span class="meta-value">D. Krishna Chaitanya Varma</span><span class="meta-value">G. Radhika</span></div>
-                    </div>
-                    <div class="back-nav"><a href="../../writing.html" class="back-btn">Back to Research</a></div>
-                </div>
-                <div class="detail-right">
-                    <div class="detail-section" style="text-align: left;">
-                        <h2>Abstract</h2>
-                        <p>With the advent of the Internet of Things, trust is one of the important factors for provisioning secure, reliable, seamless communications and services. Connected devices are the order of the day, where IoT plays a vital role in functioning. However, these IoT devices use various protocols for communication mostly a centralized architecture for data transfer. One of these protocols is Message Queue Telemetry Transport (MQTT), which is a Pub-Sub (publisher and subscriber) protocol used for device-to-device communication on TCP through a broker. This centralized server can be a third-party service provider, which again raises the issue of trust. To address this, we propose a decentralized and distributed network architecture called InterPlanetary File System (IPFS) is used instead of a third-party service provider. IPFS enables a publish-subscribe model similar to MQTT, but by removing the broker and making a peer-to-peer communication. Peer-to-peer architecture has its challenges like security. The issue of security is also addressed by encrypting the files or data that has to be sent over the IPFS network using PGP (Pretty Good Privacy).</p>
-                    </div>
-                    <div class="detail-section" style="text-align: left;">
-                        <h2>Conclusion</h2>
-                        <p>InterPlanetary File System indeed plays a major role in the field of D2D communication. It does not only keep the data secure but also guarantees total control of the device which can be accessed from any part of the world due to its distributed architecture. The paper presents the use of IPFS in the field of the Internet of things as a communication protocol that solves the problem of data accessibility and availability by scaling out centralized servers and cloud platforms. Which makes it reliable and inexpensive for users, unlike MQTT.</p>
-                    </div>
-                    <div class="detail-section" style="text-align: center;">
-                        <h2>View Publication</h2>
-                        <p><a href="paper/ipfs_paper.pdf" target="_blank" class="btn">Click here</a></p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </main>
-    <script src="../../assets/js/particles.js"></script>
-    <script src="../../assets/js/cursor-glow.js"></script>
-    <script src="../../assets/js/common.js"></script>
-    <script src="../../assets/js/transitions.js"></script>
+<body data-page="detail">
+<canvas id="sky"></canvas><div class="vig"></div><div class="grain"></div>
+<div class="bar t"></div><div class="bar b"></div>
+<nav class="bgsw" id="bgsw"><span class="lbl">Sky</span><a data-t="now">Now</a><a data-t="6.3">Dawn</a><a data-t="12">Day</a><a data-t="18.3">Dusk</a><a data-t="23">Night</a></nav>
+
+<a class="skip" href="#content">Skip to content</a>
+<header class="top">
+  <nav class="rail" aria-label="Primary">
+    <span class="slot"><a class="back" href="../../writing.html"><span aria-hidden="true">&larr;</span> Research</a></span>
+    <a class="brand" href="../../index.html" aria-label="Home"><img src="../../assets/icons/fox.webp" alt="" width="28" height="28"><span class="bl">Home</span></a>
+    <span class="slot"></span>
+  </nav>
+</header>
+<div class="shell">
+<main id="content">
+
+<div class="masthead compact">
+  <div class="crumb">
+    <a href="../../index.html">Home</a><span class="sep">/</span>
+    <a href="../../writing.html">Research</a>
+  </div>
+  <h1 class="big title ink">Access Mechanism Using InterPlanetary File System</h1>
+</div>
+
+<section class="slab">
+  <div class="panel detail">
+    <div class="aside">
+      <span class="badge ">Peer-Reviewed Research Paper</span>
+      <div class="facts"><div class="f"><span class="k">Journal</span><span class="v">International Journal of Engineering & Technology, UAE</span></div><div class="f"><span class="k">ISSN</span><span class="v">2227-524X</span></div><div class="f"><span class="k">Publication Date</span><span class="v">March 2018</span></div><div class="f"><span class="k">Status</span><span class="v">Published</span></div><div class="f"><span class="k">Field</span><span class="v">Peer-to-Peer Networks</span></div><div class="f"><span class="k">Authors</span><span class="v">Pandu Ranga Reddy Konala</span><span class="v">V. Sai Abhinav Reddy</span><span class="v">D. Krishna Chaitanya Varma</span><span class="v">G. Radhika</span></div></div>
+      <p style="margin-top:22px"><a class="btn" href="../../writing.html">&larr; All research</a></p>
+    </div>
+    <div class="prose"><section><h2>Abstract</h2><p>With the advent of the Internet of Things, trust is one of the important factors for provisioning secure, reliable, seamless communications and services. Connected devices are the order of the day, where IoT plays a vital role in functioning. However, these IoT devices use various protocols for communication mostly a centralized architecture for data transfer. One of these protocols is Message Queue Telemetry Transport (MQTT), which is a Pub-Sub (publisher and subscriber) protocol used for device-to-device communication on TCP through a broker. This centralized server can be a third-party service provider, which again raises the issue of trust. To address this, we propose a decentralized and distributed network architecture called InterPlanetary File System (IPFS) is used instead of a third-party service provider. IPFS enables a publish-subscribe model similar to MQTT, but by removing the broker and making a peer-to-peer communication. Peer-to-peer architecture has its challenges like security. The issue of security is also addressed by encrypting the files or data that has to be sent over the IPFS network using PGP (Pretty Good Privacy).</p></section><section><h2>Conclusion</h2><p>InterPlanetary File System indeed plays a major role in the field of D2D communication. It does not only keep the data secure but also guarantees total control of the device which can be accessed from any part of the world due to its distributed architecture. The paper presents the use of IPFS in the field of the Internet of things as a communication protocol that solves the problem of data accessibility and availability by scaling out centralized servers and cloud platforms. Which makes it reliable and inexpensive for users, unlike MQTT.</p></section><section><h2>View Publication</h2><p><a href="paper/ipfs_paper.pdf" target="_blank" class="btn">Click here</a></p></section></div>
+  </div>
+</section>
+
+</main>
+<footer id="contact">
+  <p class="lets mono">Let's connect!</p>
+  <a class="mail" href="mailto:p.konala.uow@gmail.com">p.konala.uow@gmail.com</a>
+  <div class="links">
+    <a href="https://github.com/PanduKonala" target="_blank" rel="noopener">GitHub</a>
+    <a href="https://www.linkedin.com/in/pandu-konala-179064149/" target="_blank" rel="noopener">LinkedIn</a>
+    <a href="https://app.hackthebox.com/profile/99839" target="_blank" rel="noopener">Hack The Box</a>
+    <a href="../../assets/files/CV_Konala_Pandu_2026.pdf" target="_blank" rel="noopener">CV</a>
+  </div>
+</footer>
+</div>
+
+<script type="module" src="../../assets/js/scene.js?v=f9248d45"></script>
 </body>
 </html>

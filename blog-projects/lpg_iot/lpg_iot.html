@@ -1,88 +1,67 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-Z8PFVPLHSL"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-
-      gtag('config', 'G-Z8PFVPLHSL');
-    </script>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Smart Safety System For LPG Containers">
-    <link rel="stylesheet" href="../../assets/css/common.css">
-    <link rel="stylesheet" href="../../assets/css/font-awesome-all.css">
-    <link rel="icon" type="image/x-icon" href="../../assets/icons/favicon.ico">
-    <title>LPG Safety System - Pandu Konala</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Smart Safety System For LPG Containers · Pandu Konala</title>
+<meta name="description" content="Cyber-physical system for safe LPG transport using multiple sensors linked to cloud.">
+<meta name="author" content="Pandu Ranga Reddy Konala">
+<meta property="og:title" content="Smart Safety System For LPG Containers · Pandu Konala">
+<meta property="og:description" content="Cyber-physical system for safe LPG transport using multiple sensors linked to cloud.">
+<meta property="og:type" content="website">
+<link rel="icon" href="../../assets/icons/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="../../assets/icons/favicon-32x32.png">
+<link rel="apple-touch-icon" href="../../assets/icons/apple-touch-icon.png">
+<link rel="stylesheet" href="../../assets/css/noir.css?v=8df2095a">
 </head>
-<body class="theme-red">
-    <header class="minimal-header">
-        <a href="../../index.html" class="logo-link"><img src="../../assets/icons/fox.webp" alt="Logo" class="logo"></a>
-    </header>
-    <main>
-        <div class="detail-page">
-            <div class="detail-container">
-                <div class="detail-left">
-                    <h1>Smart Safety System For LPG Containers</h1>
-                    <span class="detail-badge">Research Project</span>
-                    <div class="detail-meta">
-                        <div class="meta-item"><span class="meta-label">Fields</span><span class="meta-value">Internet of Things</span></div>
-                        <div class="meta-item"><span class="meta-label">Timeline</span><span class="meta-value">July 13, 2018 - October 17, 2018</span></div>
-                        <div class="meta-item"><span class="meta-label">Status</span><span class="meta-value">Completed</span></div>
-                        <div class="meta-item"><span class="meta-label">Funding</span><span class="meta-value">Amrita Vishwa Vidyapeetham</span></div>
-                        <div class="meta-item"><span class="meta-label">Team</span><span class="meta-value">Pandu Ranga Reddy Konala</span><span class="meta-value">Nirmal Krishnan</span><span class="meta-value">Shreehari Nair</span></div>
-                    </div>
-                    <div class="back-nav"><a href="../../projects.html" class="back-btn">Back to Projects</a></div>
-                </div>
-                <div class="detail-right">
-                    <div class="detail-section" style="text-align: left;">
-                        <h2>Overview</h2>
-                        <p>This project is funded by Amrita Vishwa Vidyapeetham. The objective is to design and develop a Cyber-Physical System for the safe transport system of Liquid Petroleum Gas (LPG) using ultra-sonic, MQ9 & DHT11 sensors which are linked to the cloud.</p>
-                    </div>
-                    <div class="detail-section" style="text-align: left;">
-                        <h2>Problem Statement</h2>
-                        <p>Liquid petroleum gas is a highly flammable material that has to be contained very securely. To monitor the containment effectively, IoT provides a reasonable solution for real-time safety monitoring.</p>
-                    </div>
-                    <div class="detail-section" style="text-align: left;">
-                        <h2>Hardware Components</h2>
-                        <ul>
-                            <li><strong>DHT11:</strong> Temperature sensor to detect if liquid has reached its flashpoint</li>
-                            <li><strong>MQ9:</strong> Gas sensor for detecting LPG, CO, CH4 leakages</li>
-                            <li><strong>Ultrasonic Sensor:</strong> Measures distance between container lid and liquid level</li>
-                            <li><strong>NodeMCU:</strong> Open-source IoT platform with ESP8266 Wi-Fi SoC</li>
-                        </ul>
-                    </div>
-                    <div class="detail-section" style="text-align: left;">
-                        <h2>Software Platforms</h2>
-                        <ul>
-                            <li><strong>Arduino IDE:</strong> For programming and uploading code to boards</li>
-                            <li><strong>Adafruit Cloud:</strong> Cloud service for storing and retrieving sensor data</li>
-                            <li><strong>IFTTT:</strong> For creating automated alerts and notifications</li>
-                        </ul>
-                    </div>
-                    <div class="detail-section" style="text-align: left;">
-                        <h2>Key Features</h2>
-                        <ul>
-                            <li>Real-time monitoring of temperature, gas levels, and liquid levels</li>
-                            <li>Automated alerts to authorities when safety thresholds are exceeded</li>
-                            <li>Cloud-based data storage and analysis</li>
-                            <li>Automatic suppression measures activation</li>
-                        </ul>
-                    </div>
-                    <div class="detail-section" style="text-align: center;">
-                        <h2>View on GitHub</h2>
-                        <p><a href="https://github.com/PanduKonala/Smart-Safety-System-For-LPG-Containers" target="_blank" class="btn">Click here</a></p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </main>
-    <script src="../../assets/js/particles.js"></script>
-    <script src="../../assets/js/cursor-glow.js"></script>
-    <script src="../../assets/js/common.js"></script>
-    <script src="../../assets/js/transitions.js"></script>
+<body data-page="detail">
+<canvas id="sky"></canvas><div class="vig"></div><div class="grain"></div>
+<div class="bar t"></div><div class="bar b"></div>
+<nav class="bgsw" id="bgsw"><span class="lbl">Sky</span><a data-t="now">Now</a><a data-t="6.3">Dawn</a><a data-t="12">Day</a><a data-t="18.3">Dusk</a><a data-t="23">Night</a></nav>
+
+<a class="skip" href="#content">Skip to content</a>
+<header class="top">
+  <nav class="rail" aria-label="Primary">
+    <span class="slot"><a class="back" href="../../projects.html"><span aria-hidden="true">&larr;</span> Projects</a></span>
+    <a class="brand" href="../../index.html" aria-label="Home"><img src="../../assets/icons/fox.webp" alt="" width="28" height="28"><span class="bl">Home</span></a>
+    <span class="slot"></span>
+  </nav>
+</header>
+<div class="shell">
+<main id="content">
+
+<div class="masthead compact">
+  <div class="crumb">
+    <a href="../../index.html">Home</a><span class="sep">/</span>
+    <a href="../../projects.html">Projects</a>
+  </div>
+  <h1 class="big title ink">Smart Safety System For LPG Containers</h1>
+</div>
+
+<section class="slab">
+  <div class="panel detail">
+    <div class="aside">
+      <span class="badge ">Research Project</span>
+      <div class="facts"><div class="f"><span class="k">Fields</span><span class="v">Internet of Things</span></div><div class="f"><span class="k">Timeline</span><span class="v">July 13, 2018 - October 17, 2018</span></div><div class="f"><span class="k">Status</span><span class="v">Completed</span></div><div class="f"><span class="k">Funding</span><span class="v">Amrita Vishwa Vidyapeetham</span></div><div class="f"><span class="k">Team</span><span class="v">Pandu Ranga Reddy Konala</span><span class="v">Nirmal Krishnan</span><span class="v">Shreehari Nair</span></div></div>
+      <p style="margin-top:22px"><a class="btn" href="../../projects.html">&larr; All projects</a></p>
+    </div>
+    <div class="prose"><section><h2>Overview</h2><p>This project is funded by Amrita Vishwa Vidyapeetham. The objective is to design and develop a Cyber-Physical System for the safe transport system of Liquid Petroleum Gas (LPG) using ultra-sonic, MQ9 & DHT11 sensors which are linked to the cloud.</p></section><section><h2>Problem Statement</h2><p>Liquid petroleum gas is a highly flammable material that has to be contained very securely. To monitor the containment effectively, IoT provides a reasonable solution for real-time safety monitoring.</p></section><section><h2>Hardware Components</h2><ul> <li><strong>DHT11:</strong> Temperature sensor to detect if liquid has reached its flashpoint</li> <li><strong>MQ9:</strong> Gas sensor for detecting LPG, CO, CH4 leakages</li> <li><strong>Ultrasonic Sensor:</strong> Measures distance between container lid and liquid level</li> <li><strong>NodeMCU:</strong> Open-source IoT platform with ESP8266 Wi-Fi SoC</li> </ul></section><section><h2>Software Platforms</h2><ul> <li><strong>Arduino IDE:</strong> For programming and uploading code to boards</li> <li><strong>Adafruit Cloud:</strong> Cloud service for storing and retrieving sensor data</li> <li><strong>IFTTT:</strong> For creating automated alerts and notifications</li> </ul></section><section><h2>Key Features</h2><ul> <li>Real-time monitoring of temperature, gas levels, and liquid levels</li> <li>Automated alerts to authorities when safety thresholds are exceeded</li> <li>Cloud-based data storage and analysis</li> <li>Automatic suppression measures activation</li> </ul></section><section><h2>View on GitHub</h2><p><a href="https://github.com/PanduKonala/Smart-Safety-System-For-LPG-Containers" target="_blank" class="btn">Click here</a></p></section></div>
+  </div>
+</section>
+
+</main>
+<footer id="contact">
+  <p class="lets mono">Let's connect!</p>
+  <a class="mail" href="mailto:p.konala.uow@gmail.com">p.konala.uow@gmail.com</a>
+  <div class="links">
+    <a href="https://github.com/PanduKonala" target="_blank" rel="noopener">GitHub</a>
+    <a href="https://www.linkedin.com/in/pandu-konala-179064149/" target="_blank" rel="noopener">LinkedIn</a>
+    <a href="https://app.hackthebox.com/profile/99839" target="_blank" rel="noopener">Hack The Box</a>
+    <a href="../../assets/files/CV_Konala_Pandu_2026.pdf" target="_blank" rel="noopener">CV</a>
+  </div>
+</footer>
+</div>
+
+<script type="module" src="../../assets/js/scene.js?v=f9248d45"></script>
 </body>
 </html>
