@@ -81,13 +81,18 @@ function vnoise(x,y){const xi=Math.floor(x),yi=Math.floor(y),xf=x-xi,yf=y-yi,u=x
   const a=hash(xi,yi),b=hash(xi+1,yi),c=hash(xi,yi+1),d=hash(xi+1,yi+1);return a+(b-a)*u+(c-a)*v+(a-b-c+d)*u*v;}
 function fbm(x,y,oct=6){let s=0,a=.5,f=1;for(let i=0;i<oct;i++){s+=a*vnoise(x*f,y*f);f*=2.03;a*=.5;}return s;}
 const FOG=`float fogOf(float d,float k){return exp(-d*d*k);}`;
+/* Gentle camera-side fill, only in dim hours. A broad falloff lifts nearby
+   banks and foliage without a visible spotlight circle or glowing horizon. */
 const LAMPF=`
   uniform vec3 uCamF;
-  float lamp(vec3 W,vec3 n,float dayK){vec3 d=W-cameraPosition;float dist=length(d);d/=max(dist,1.0);
-    float cone=smoothstep(0.30,0.85,dot(d,uCamF));
-    /* soft torch: flat and dim up close (no blow-out as trees pass the camera), fading out by ~900 units */
-    float fall=smoothstep(0.0,260.0,dist)*(1.0-smoothstep(380.0,950.0,dist))*0.55;
-    float lam=max(dot(n,-d),0.0)*0.55+0.45;return cone*fall*lam*(1.0-dayK);}`;
+  float cameraFill(vec3 W,vec3 n,float elevation){
+    vec3 offset=W-cameraPosition;float distance=length(offset);
+    vec3 direction=offset/max(distance,1.0);
+    float cone=smoothstep(-0.20,0.75,dot(direction,uCamF));
+    float fall=(1.0-smoothstep(420.0,950.0,distance))/(1.0+distance*distance/90000.0);
+    float facing=0.55+0.45*max(dot(n,-direction),0.0);
+    float dim=1.0-smoothstep(0.08,0.50,elevation);
+    return cone*fall*facing*dim*0.30;}`;
 const DISC=`vec2 q=gl_PointCoord-0.5; float m=1.0-smoothstep(0.0,0.5,length(q));`;
 
 /* ---- sky dome: gradient + sun glow + procedural stars + clouds (stars sit UNDER the clouds) ---- */
@@ -122,7 +127,9 @@ const sky=new THREE.Mesh(new THREE.SphereGeometry(4000,64,32),new THREE.ShaderMa
       float nearH=1.0-smoothstep(-0.10,0.55,uEl);
       float vis=smoothstep(-0.26,0.04,uEl);
       float hi=smoothstep(0.35,0.9,uEl);
-      c+=uSun*(pow(s,260.0)*1.2+pow(s,18.0)*(0.14+0.42*nearH)+pow(s,4.0)*0.22*hi)*vis;
+      /* Keep a compact aureole around the disc, with a faint warm horizon
+         haze. Broad additive bloom used to bleach a large circle of sky. */
+       c+=uSun*(pow(s,3200.0)*0.40+pow(s,180.0)*0.065+pow(s,12.0)*(0.025+0.07*nearH))*vis;
       /* stars, fading toward the horizon haze and with daylight */
       c+=vec3(0.86,0.90,1.0)*stars(d)*uNight*smoothstep(0.0,0.18,y)*1.15;
       /* aurora: night only. The frustum only spans ~50 degrees, so the curtain noise runs at a high
@@ -151,11 +158,11 @@ scene.add(sky);
 /* ---- sun disc (depth-tested, so ridges hide it) + FULL moon with a wide halo ---- */
 const sunGrp=new THREE.Group();scene.add(sunGrp);
 const hiSun=sm(0.35,0.9,sunEl);
-const sunDisc=L(K.sun,C('#fff3c4'),0.55*hiSun);
+const sunDisc=L(K.sun,C('#fff9ea'),0.85*hiSun);
 sunGrp.add(new THREE.Mesh(new THREE.CircleGeometry(56,48),new THREE.MeshBasicMaterial({color:sunDisc,transparent:true,opacity:1,depthWrite:false})));
-sunGrp.add(new THREE.Mesh(new THREE.CircleGeometry(150,48),new THREE.ShaderMaterial({uniforms:U,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,
+sunGrp.add(new THREE.Mesh(new THREE.CircleGeometry(120,48),new THREE.ShaderMaterial({uniforms:U,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,
   vertexShader:`varying vec2 vU;void main(){vU=uv*2.0-1.0;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}`,
-  fragmentShader:`uniform vec3 uSun;uniform float uEl;varying vec2 vU;void main(){float r=length(vU);float hi=smoothstep(0.35,0.9,uEl);gl_FragColor=vec4(uSun,pow(max(0.0,1.0-r),2.2)*(0.55+0.15*hi));}`})));
+  fragmentShader:`uniform vec3 uSun;uniform float uEl;varying vec2 vU;void main(){float r=length(vU);float hi=smoothstep(0.35,0.9,uEl);gl_FragColor=vec4(uSun,pow(max(0.0,1.0-r),2.8)*(0.22+0.06*hi));}`})));
 sunGrp.visible=sunEl>-0.12;
 const moon=new THREE.Mesh(new THREE.CircleGeometry(66,64),new THREE.ShaderMaterial({transparent:true,depthWrite:false,uniforms:{uA:{value:nightF}},
   vertexShader:`varying vec2 vU;void main(){vU=uv*2.0-1.0;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}`,
@@ -173,166 +180,204 @@ const halo=new THREE.Mesh(new THREE.CircleGeometry(430,64),new THREE.ShaderMater
     gl_FragColor=vec4(vec3(0.70,0.78,0.95),g*uA);}`}));
 scene.add(moon);scene.add(halo);moon.visible=halo.visible=nightF>0.02;
 
-/* ---- terrain: heights from fBm of WORLD coordinates in the vertex shader -> endless forward travel.
-        Solid, lit surface: normal from finite differences of the height field, sun/moon key light,
-        sky ambient, hemisphere fill in the valley, distance fog. ---- */
-/* height field shared by terrain and water: valley + meandering river channel (water level y=0) */
+/* ---- terrain: shared world-space height field keeps the ground, water and trees
+        aligned while the sampling window travels along the river. ---- */
 const HFN=`
   float riverC(float z){return sin(z*0.0019)*85.0+sin(z*0.0047+1.3)*30.0;}
-  /* ridged multifractal: 1-|n| folds the noise into sharp crests; each octave is gated by the last so detail
-     piles up on the ridges and the basins stay smooth, which is what eroded rock actually does */
   float ridged(vec2 p){float s=0.0,a=0.5,w=1.0;for(int i=0;i<5;i++){float n=1.0-abs(2.0*vn2(p)-1.0);n=n*n*w;w=clamp(n*1.8,0.0,1.0);s+=n*a;p=p*2.07+vec2(1.7,9.2);a*=0.5;}return s;}
-  float height(vec2 q){float rc=riverC(q.y);
-    float base=fbm6(q*0.0028+vec2(3.1,7.7));                       // broad massing (valley layout unchanged)
+  float height(vec2 q){float rc=riverC(q.y),bank=abs(q.x-rc);
+    float base=fbm6(q*0.0028+vec2(3.1,7.7));
     float h=pow(base,1.9)*300.0;
-    float rg=ridged(q*0.0055+vec2(5.0,1.0));                       // crests and spurs, only where there is already a mountain
-    h+=(rg-0.30)*150.0*smoothstep(50.0,190.0,h);
-    h+=(fbm2(q*0.017+vec2(9.0,2.0))-0.5)*30.0*smoothstep(40.0,160.0,h);   // gully / spur relief on the flanks
-    h+=fbm2(q*0.045)*9.0;
-    h*=1.0-0.85*exp(-pow((q.x-rc*0.7)/150.0,2.0));            // valley follows the river loosely
-    float dx=abs(q.x-rc)+(fbm2(q*0.02)-0.5)*16.0;               // ragged banks
-    h=mix(h,-7.0-fbm2(q*0.08)*2.0,smoothstep(60.0,20.0,dx));    // river bed below water level
+    /* Bend ridge coordinates at a broad scale, rather than wrinkle every slope
+       equally. The river corridor retains its original low, open profile. */
+    vec2 warp=vec2(vn2(q*0.0021+13.0),vn2(q*0.0021-7.0))-0.5;
+    vec2 rockQ=q+warp*100.0;
+    float rg=ridged(rockQ*0.0055+vec2(5.0,1.0));
+    float upland=smoothstep(65.0,260.0,bank);
+    h+=(rg-0.30)*195.0*smoothstep(38.0,160.0,h)*upland;
+    /* Long descending spurs and intervening gullies. This is an erosion-like
+       shape model, not a hydraulic simulation. Detail tapers out at the banks. */
+    float drainage=vn2(vec2(q.y*0.018+warp.x*1.8,bank*0.0035+warp.y));
+    float gully=1.0-abs(drainage*2.0-1.0);
+    h-=pow(gully,5.0)*26.0*smoothstep(40.0,130.0,h)*upland;
+    h+=(fbm2(rockQ*0.015+vec2(9.0,2.0))-0.5)*20.0*smoothstep(40.0,160.0,h);
+    h+=(fbm2(q*0.045)-0.35)*8.0;
+    h*=1.0-0.85*exp(-pow((q.x-rc*0.7)/150.0,2.0));
+    float dx=bank+(fbm2(q*0.02)-0.5)*16.0;
+    h=mix(h,-7.0-fbm2(q*0.08)*2.0,1.0-smoothstep(20.0,60.0,dx));
     return h;}`;
 const grp=new THREE.Group();scene.add(grp);
 const TW=2000,TD=3200;
 {const geo=new THREE.PlaneGeometry(TW,TD,GRID[0],GRID[1]);geo.rotateX(-Math.PI/2);
- const HVS=`uniform float uS,uScroll,uEl;uniform vec3 uSunDir;varying float vH,vF,vSh;varying vec3 vN,vW;varying vec2 vQ;${FOG}${GNOISE}${HFN}
-   /* terrain self-shadow: march toward the key light and see if the ground gets in the way. Six samples on
-      a widening stride; soft by comparing clearance to distance. Skipped at night (moonlight stays flat). */
-   float shade(vec2 q,float h){vec3 L=normalize(vec3(uSunDir.x,max(uSunDir.y,0.06),uSunDir.z));
-     if(uEl<-0.15)return 1.0;float s=1.0;
-     for(int i=1;i<=${LITE?4:6};i++){float t=float(i*i)*9.0;vec2 p=q+L.xz*t;float hh=height(p);
-       s=min(s,clamp((h+L.y*t-hh)/(t*0.22)+0.6,0.0,1.0));}
-     return mix(1.0,s,smoothstep(-0.15,0.05,uEl));}
+ const HVS=`uniform float uS,uScroll,uEl;uniform vec3 uSunDir;varying float vH,vF,vSh,vShelter;varying vec3 vN,vW;varying vec2 vQ;${FOG}${GNOISE}${HFN}
+   float shade(vec2 q,float h){
+     vec3 L=uEl<-0.15?normalize(vec3(-uSunDir.x*0.9,0.45,-0.6)):normalize(vec3(uSunDir.x,max(uSunDir.y,0.06),uSunDir.z));
+     float s=1.0;
+     for(int i=1;i<=${LITE?4:6};i++){float t=float(i*i)*9.0;float hh=height(q+L.xz*t);
+       s=min(s,clamp((h+L.y*t-hh)/(t*0.20)+0.65,0.0,1.0));}
+     return mix(0.24,1.0,s);}
    void main(){vec2 q=vec2(position.x,position.z+uScroll);float h=height(q);
-     float e=3.0;float hx=height(q+vec2(e,0.0)),hz=height(q+vec2(0.0,e));
-     vN=normalize(vec3(h-hx,e,h-hz));vQ=q;vSh=shade(q,h);
+     /* Symmetric differences avoid biasing highlights toward one grid axis.
+        Local concavity only dims ambient fill, never paints black stripes. */
+     float e=3.0;
+     float xp=height(q+vec2(e,0.0)),xm=height(q-vec2(e,0.0));
+     float zp=height(q+vec2(0.0,e)),zm=height(q-vec2(0.0,e));
+     vN=normalize(vec3(xm-xp,2.0*e,zm-zp));vQ=q;vSh=shade(q,h);
+     vShelter=1.0-smoothstep(0.0,2.8,(xp+xm+zp+zm)*0.25-h)*0.32;
      vec3 P=vec3(position.x,h,position.z);vH=h;vW=(modelMatrix*vec4(P,1.0)).xyz;
-     vec4 mv=modelViewMatrix*vec4(P,1.0);float d=-mv.z;vF=fogOf(d,${FOGK});gl_Position=projectionMatrix*mv;}`;
+     vec4 mv=modelViewMatrix*vec4(P,1.0);vF=fogOf(-mv.z,${FOGK});gl_Position=projectionMatrix*mv;}`;
  grp.add(new THREE.Mesh(geo,new THREE.ShaderMaterial({uniforms:U,vertexShader:HVS,
-   fragmentShader:`uniform vec3 uZen,uHor,uValley,uRidge,uSun,uSunDir;uniform float uEl,uNight;varying float vH,vF,vSh;varying vec3 vN,vW;varying vec2 vQ;${GNOISE}${LAMPF}
-     void main(){vec3 n=normalize(vN);
+   fragmentShader:`uniform vec3 uZen,uHor,uValley,uRidge,uSun,uSunDir;uniform float uEl,uNight;varying float vH,vF,vSh,vShelter;varying vec3 vN,vW;varying vec2 vQ;${GNOISE}${LAMPF}
+     /* Surface variation is evaluated in world space on all three axes, so
+        cliffs do not stretch a top-down pattern into parallel rubbery bands. */
+     float stone(vec3 p,vec3 weights){
+       return vn2(p.yz)*weights.x+vn2(p.xz+17.3)*weights.y+vn2(p.xy-9.1)*weights.z;}
+     void main(){vec3 baseN=normalize(vN),n=baseN;
        float dayK=smoothstep(-0.20,0.05,uEl);
-       float lod=1.0-smoothstep(400.0,1600.0,length(cameraPosition-vW));       // detail fades with distance
-       /* surface detail: a rock-scale noise gradient bumps the normal (more on steep faces), and its value
-          doubles as cavity occlusion. Stratified rock gets bands that follow height, tilted by the noise. */
-       vec2 dq=vQ*0.19;float e=0.25;
-       float d0=fbm2(dq),d1=fbm2(dq+vec2(e,0.0)),d2=fbm2(dq+vec2(0.0,e));
-       float slope0=1.0-n.y;
-       vec2 gdet=vec2(d0-d1,d0-d2)/e;
-       n=normalize(n+vec3(gdet.x,0.0,gdet.y)*(0.05+0.30*slope0)*lod);
-       float slope=1.0-n.y;
-       float cav=0.72+0.28*smoothstep(0.25,0.75,d0);
-       /* key light: the sun by day, the moon (opposite side, cool) by night */
+       float camD=length(cameraPosition-vW);
+       float lod=1.0-smoothstep(250.0,1450.0,camD);
+       vec3 weights=pow(abs(baseN),vec3(4.0));weights/=max(dot(weights,vec3(1.0)),0.001);
+       vec3 p=vec3(vQ.x,vH,vQ.y);
+       float mineral=stone(p*0.033,weights),grain=stone(p*0.65,weights);
+       float fine=stone(p*1.15,weights);
+       /* Fine grains disappear before their projected footprint becomes smaller
+          than a pixel; they must not sparkle when the camera travels. */
+       float micro=1.0-smoothstep(0.35,1.2,length(fwidth(p*1.15)));
+       float detail=stone(p*0.12,weights);
+       vec3 g=vec3(stone(p*0.12+vec3(0.15,0.0,0.0),weights),
+                   stone(p*0.12+vec3(0.0,0.15,0.0),weights),
+                   stone(p*0.12+vec3(0.0,0.0,0.15),weights))-detail;
+       g/=0.15;
+       /* Project the perturbation onto the actual rock face. */
+       float slope=1.0-clamp(baseN.y,0.0,1.0);
+       /* An irregular alpine snowline, with drifts below the main cap and
+          exposed rock on near-vertical faces. Summit snow remains continuous. */
+       float snowLine=118.0+(fbm2(vQ*0.007+vec2(8.0,3.0))-0.48)*48.0;
+       float drift=(mineral-0.5)*22.0+(detail-0.5)*9.0;
+       float snowHeight=smoothstep(snowLine-12.0,snowLine+30.0,vH+drift);
+       float summit=smoothstep(snowLine+28.0,snowLine+70.0,vH);
+       float holding=1.0-smoothstep(0.52,0.86,slope)*(0.92-0.30*summit);
+       float snow=clamp(snowHeight*holding,0.0,1.0);
+       n=normalize(baseN-(g-baseN*dot(g,baseN))*(0.28+0.65*slope)*lod*mix(1.0,0.16,snow));
+       float cav=mix(1.0,0.83+0.17*smoothstep(0.22,0.70,detail),lod*(1.0-snow*0.8));
        vec3 L=normalize(vec3(uSunDir.x,max(uSunDir.y,0.12),uSunDir.z));
        vec3 Lm=normalize(vec3(-uSunDir.x*0.9,0.45,-0.6));
-       float diff=max(dot(n,L),0.0)*vSh*dayK+max(dot(n,Lm),0.0)*(1.0-dayK)*1.05;
-       vec3 keyC=mix(vec3(0.72,0.80,1.05),uSun,dayK);
-       /* ambient: sky from above, valley colour from below (hemisphere) */
-       float up=n.y*0.5+0.5;
-       vec3 amb=mix(uValley*1.4,mix(uHor,uZen,0.5)*1.3,up);
-       amb=mix(amb,vec3(dot(amb,vec3(0.299,0.587,0.114)))*1.04,dayK*0.80);
-       /* materials by slope and altitude: tussock on gentle low ground, bare rock on anything steep,
-          scree at the foot of cliffs, snow above a noisy snowline where it can lie */
-       float strata=0.5+0.5*sin(vH*0.42+fbm2(vQ*0.012)*9.0+d0*2.0);
-       vec3 rock=mix(vec3(0.27,0.25,0.24),vec3(0.46,0.43,0.40),strata*0.7+d0*0.3);
-       rock=mix(rock,vec3(0.34,0.36,0.40),smoothstep(0.55,0.85,slope)*0.5);         // colder, bluer cliff faces
-       vec3 tuss=mix(vec3(0.30,0.34,0.42),mix(vec3(0.33,0.39,0.26),vec3(0.46,0.47,0.30),smoothstep(0.35,0.7,d0)),dayK*0.9);
-       vec3 scree=vec3(0.42,0.41,0.39);
-       vec3 snow=vec3(0.90,0.92,0.95);
-       float rk=smoothstep(0.28,0.50,slope+(d0-0.5)*0.12);
-       float sc=smoothstep(0.18,0.32,slope)*(1.0-rk)*smoothstep(60.0,140.0,vH);
-       vec3 alb=mix(tuss,rock,rk);alb=mix(alb,scree,sc*0.6);
-       float snowL=150.0+(fbm2(vQ*0.006)-0.5)*70.0;
-       float sn=smoothstep(snowL-30.0,snowL+40.0,vH+(fbm2(vQ*0.05)-0.5)*40.0)*(1.0-smoothstep(0.30,0.62,slope));
-       alb=mix(alb,snow,sn);
-       /* by night everything cools toward blue rock */
-       alb=mix(alb*vec3(0.75,0.82,1.0),alb,dayK);
-       float ex=mix(1.35,1.72,dayK);
-       vec3 col=alb*cav*(amb*(0.55+0.30*dayK)+keyC*diff*(0.95+1.15*dayK))*ex;
-       col+=uRidge*(0.12+0.16*dayK)*sn*diff;                       // warm rim on lit snow
-       col+=uSun*pow(max(dot(normalize(L+normalize(cameraPosition-vW)),n),0.0),24.0)*sn*0.25*dayK*vSh;  // snow sheen
-       col+=uValley*0.35*(1.0-smoothstep(0.0,110.0,vH));          // glow in the valley floor
-       col+=vec3(0.07,0.13,0.12)*uNight*up*(0.45+0.55*sn);       // aurora/sky glow on upward faces at night
-       col+=alb*vec3(1.0,0.90,0.76)*lamp(vW,n,dayK)*0.8;          // camera head-light
-       vec3 fogc=mix(uHor,uZen,mix(0.35,0.18,dayK))*mix(1.0,1.22,dayK);          // aerial perspective by day
+       float diff=(max(dot(n,L),0.0)*dayK+max(dot(n,Lm),0.0)*(1.0-dayK))*vSh;
+       vec3 keyC=mix(vec3(0.66,0.74,0.92),uSun,dayK);
+       float up=baseN.y*0.5+0.5;
+       vec3 amb=mix(uValley*1.1,mix(uHor,uZen,0.5)*1.3,up);
+       amb=mix(amb,vec3(dot(amb,vec3(0.299,0.587,0.114))),dayK*0.80);
+       /* Broad, non-periodic mineral mottling replaces the height-based seams
+          and stretched bedding that read as horizontal lines on the slopes. */
+       float mottling=stone(p*0.018+vec3(4.1,9.3,2.7),weights);
+       vec3 rock=mix(vec3(0.19,0.195,0.20),vec3(0.49,0.46,0.41),smoothstep(0.22,0.78,mineral));
+       rock*=0.88+0.16*mottling+0.38*(grain-0.5)*lod+0.24*(fine-0.5)*micro;
+       rock+=vec3(0.07,0.065,0.055)*smoothstep(0.62,0.79,fine)*micro;
+       vec3 grass=mix(vec3(0.19,0.23,0.14),vec3(0.35,0.32,0.20),smoothstep(0.28,0.73,mineral));
+       grass*=0.80+0.36*grain*lod+0.18*(fine-0.5)*micro;
+       vec3 scree=mix(vec3(0.29,0.28,0.26),vec3(0.43,0.41,0.37),mineral);
+       float rk=smoothstep(0.12,0.34,slope+(mineral-0.5)*0.25);
+       float debris=smoothstep(0.10,0.28,slope)*(1.0-smoothstep(0.36,0.56,slope));
+       float bank=abs(vQ.x-(sin(vQ.y*0.0019)*85.0+sin(vQ.y*0.0047+1.3)*30.0));
+       float shore=(1.0-smoothstep(48.0,88.0,bank))*(1.0-smoothstep(4.0,20.0,vH));
+       vec3 alb=mix(grass,rock,rk);alb=mix(alb,scree,max(debris*0.48,shore*0.8));
+       vec3 snowColor=mix(vec3(0.78,0.84,0.91),vec3(0.94,0.96,0.98),0.60+0.30*mineral);
+       alb=mix(alb,snowColor,snow);
+       keyC=mix(keyC,mix(keyC,vec3(0.94,0.97,1.0),dayK*0.60),snow);
+       /* Damp rock at the waterline is darker, not a glowing valley floor. */
+       float damp=1.0-smoothstep(1.0,7.0,vH);alb*=1.0-damp*0.26;
+       alb=mix(alb*vec3(0.83,0.88,1.0),alb,dayK);
+       vec3 col=alb*cav*(amb*(0.62+0.25*dayK)*vShelter+keyC*diff*(1.08+1.05*dayK))*mix(1.25,1.62,dayK);
+       col+=uRidge*0.12*snow*diff;
+       col+=vec3(0.045,0.085,0.08)*uNight*up*(0.45+0.55*snow);
+       col+=alb*vec3(1.0,0.94,0.86)*cameraFill(vW,n,uEl);
+       /* Haze separates distant ridges while keeping foreground rock crisp. */
+       vec3 fogc=mix(uHor,uZen,mix(0.35,0.18,dayK))*mix(1.0,1.22,dayK);
        gl_FragColor=vec4(mix(fogc,col,vF),1.0);}`})));}
 
-/* ---- the river: a flat sheet at y=0 riding in the terrain group. Depth-tested against the carved
-        channel, so only the bed shows water. Flowing fBm normals, Fresnel sky reflection, sun/moon
-        glint, aurora spill at night, soft shoreline + foam. ---- */
+/* ---- river: fine filtered ripples, muted sky/valley reflections and a soft
+   directional sun path. The original channel and water level are unchanged. ---- */
 {const wg=new THREE.PlaneGeometry(TW,TD,1,1);wg.rotateX(-Math.PI/2);
- grp.add(new THREE.Mesh(wg,new THREE.ShaderMaterial({uniforms:U,transparent:true,depthWrite:false,
-  vertexShader:`uniform float uScroll;varying vec2 vQ;varying vec3 vW;
-    void main(){vQ=vec2(position.x,position.z+uScroll);vec4 w=modelMatrix*vec4(position,1.0);vW=w.xyz;gl_Position=projectionMatrix*viewMatrix*w;}`,
-  fragmentShader:`uniform vec3 uZen,uHor,uSun,uSunDir,uValley;uniform float uT,uEl,uNight;varying vec2 vQ;varying vec3 vW;${FOG}${GNOISE}${HFN}
-    float fbm3(vec2 p){float s=0.0,a=0.5;for(int i=0;i<3;i++){s+=a*vn2(p);p*=2.1;a*=0.5;}return s;}
-    void main(){
-      float dx=vQ.x-riverC(vQ.y);if(abs(dx)>80.0)discard;
-      float depth=-height(vQ);if(depth<0.0)discard;             // water surface is y=0
-      float dayK=smoothstep(-0.20,0.05,uEl);
-      vec3 V=normalize(cameraPosition-vW);float camD=length(cameraPosition-vW);
-      /* flow field: fastest mid-channel, dragging at the banks. Noise is stretched along the flow so the
-         surface reads as a current, not a pond; a second, finer layer runs at ~2x for shear texture. */
-      float bw=1.0-clamp(abs(dx)/62.0,0.0,1.0);
-      /* the ripples are STILL in noise space (the camera's travel already reads as motion; advecting the
-         noise along a meandering axis produced converging chevrons). Isotropic scales, so no streak direction. */
-      vec2 wq=vec2(vQ.x,vQ.y);
-      vec2 p1=wq*0.055;
-      vec2 p2=wq*0.14+vec2(3.0,7.0);
-      float e=0.05;
-      float hA=fbm3(p1),hAx=fbm3(p1+vec2(e,0.0)),hAy=fbm3(p1+vec2(0.0,e));
-      float hB=fbm3(p2),hBx=fbm3(p2+vec2(e,0.0)),hBy=fbm3(p2+vec2(0.0,e));
-      vec2 g=(vec2(hAx-hA,hAy-hA)*1.0+vec2(hBx-hB,hBy-hB)*0.55)/e;
-      /* bank chop: short, fast, isotropic ripples where the current tears along the shore */
-      float chop=(1.0-bw)*smoothstep(0.0,4.0,depth);
-      vec2 p3=wq*0.45;
-      float hC=vn2(p3),hCx=vn2(p3+vec2(e,0.0)),hCy=vn2(p3+vec2(0.0,e));
-      g+=vec2(hCx-hC,hCy-hC)/e*0.45*chop;
-      /* far away the ripples must flatten or they alias into noise */
-      float lod=1.0-smoothstep(300.0,1500.0,camD);
-      vec3 n=normalize(vec3(-g.x*0.075*lod,1.0,-g.y*0.075*lod));
-      /* what the surface reflects: sky mid-river, the dark valley walls toward the banks, the boundary
-         wobbling with the waves. That mirrored shore is the biggest single cue that this is water. */
-      float fres=0.04+0.96*pow(1.0-max(dot(n,V),0.0),4.5);
-      vec3 skyRef=mix(uHor,uZen,0.45)*mix(0.55,1.0,dayK);
-      vec3 wallRef=mix(uValley*1.15,vec3(0.26,0.31,0.24),dayK*0.85);
-      float toSky=smoothstep(0.10,0.80,bw+n.x*sign(dx)*2.5+n.z*0.6);
-      vec3 refl=mix(wallRef,skyRef,toSky);
-      /* the water body: shallow teal showing the bed, dark blue in the channel, seen through the waves */
-      float dk=1.0-exp(-depth*0.30);
-      vec3 shallow=mix(vec3(0.07,0.17,0.17),vec3(0.20,0.46,0.42),dayK);
-      vec3 deepC=mix(vec3(0.02,0.045,0.09),vec3(0.05,0.15,0.25),dayK);
-      vec3 body=mix(shallow,deepC,dk);
-      vec2 rq=vec2(dx,vQ.y)*0.22+g*0.9;                                            // refracted bed lookup
-      float bed=fbm2(rq)*0.7+vn2(rq*3.1)*0.3;
-      body+=vec3(0.34,0.30,0.22)*(0.35+0.65*smoothstep(0.45,0.75,bed))*(1.0-dk)*0.55*mix(0.25,1.0,dayK);
-      float caus=smoothstep(0.55,0.85,fbm3(wq*0.12+g*0.3+vec2(0.0,uT*0.15)));
-      body+=vec3(0.30,0.36,0.34)*caus*(1.0-dk)*0.35*dayK;                            // light dancing on the bed
-      vec3 col=mix(body,refl,fres);
-      /* sun / moon: a tight highlight plus a broad glitter of sparkles riding the small waves */
-      vec3 L=normalize(vec3(uSunDir.x,max(uSunDir.y,0.08),uSunDir.z));
-      vec3 Lm=normalize(vec3(-uSunDir.x*0.9,0.45,-0.6));
-      vec3 H=normalize(L+V),Hm=normalize(Lm+V);
-      float spark=smoothstep(0.55,0.85,vn2(wq*0.7+vec2(uT*0.9,uT*0.6)))*lod;          // glints twinkle, no drift
-      float spec=(pow(max(dot(n,H),0.0),180.0)*0.5+pow(max(dot(n,H),0.0),700.0)*1.6*spark)*dayK
-                +(pow(max(dot(n,Hm),0.0),60.0)*1.2+pow(max(dot(n,Hm),0.0),400.0)*1.5*spark)*(1.0-dayK);
-      col+=mix(vec3(0.75,0.82,1.0),uSun,dayK)*spec;
-      col+=vec3(0.10,0.26,0.20)*uNight*(0.45+0.55*hA)*(0.25+0.75*fres);     // aurora on the water
-      col+=vec3(0.12,0.16,0.28)*uNight*(0.30+0.70*fres);                   // moonlit sheen so the river reads at night
-      /* foam: streaks torn along the current on wave crests, and a churned lace along the banks */
-      float crest=smoothstep(0.60,0.78,hA*0.62+hB*0.38);
-      float streak=smoothstep(0.55,0.80,fbm2(wq*0.09+7.0));
-      float foam=crest*streak*(0.25+0.75*bw)*0.55;
-      foam+=smoothstep(0.7,0.0,abs(depth-1.4))*smoothstep(0.48,0.78,fbm2(wq*0.16));
-      foam+=chop*smoothstep(0.62,0.85,hC)*0.6;
-      foam*=lod*0.85;
-      col=mix(col,vec3(0.88,0.92,0.96)*mix(0.35,1.0,dayK)+vec3(0.15,0.18,0.26)*uNight,clamp(foam,0.0,1.0));
-      /* shoreline: shallow water thins to nothing over the last couple of units */
-      float a=smoothstep(0.0,2.2,depth);
-      float f=fogOf(camD,${FOGK});
-      vec3 fogc=mix(uHor,uZen,mix(0.35,0.18,dayK))*mix(1.0,1.22,dayK);
-      gl_FragColor=vec4(mix(fogc,col,f),a*0.97);}`})));}
+ grp.add(new THREE.Mesh(wg,new THREE.ShaderMaterial({uniforms:Object.assign({},U,{uMoonDir:{value:moonDir}}),transparent:true,depthWrite:false,
+   vertexShader:`uniform float uScroll;varying vec2 vQ;varying vec3 vW;
+     void main(){vQ=vec2(position.x,position.z+uScroll);vec4 w=modelMatrix*vec4(position,1.0);vW=w.xyz;gl_Position=projectionMatrix*viewMatrix*w;}`,
+   fragmentShader:`uniform vec3 uZen,uHor,uSun,uSunDir,uMoonDir,uValley;uniform float uT,uEl,uNight;varying vec2 vQ;varying vec3 vW;${FOG}${GNOISE}${HFN}${LAMPF}
+     /* Analytic wave slopes have no hard noise thresholds. Screen-space
+        filtering removes waves smaller than a pixel instead of sparkling. */
+     vec2 wave(vec2 q,vec2 dir,float frequency,float amplitude,float phase){
+       float a=dot(q,dir)*frequency+phase;
+       float waveFade=1.0-smoothstep(0.6,2.6,fwidth(a));
+       return dir*cos(a)*amplitude*waveFade;}
+     void main(){
+       float dx=vQ.x-riverC(vQ.y);if(abs(dx)>80.0)discard;
+       float depth=-height(vQ);if(depth<0.0)discard;
+       float dayK=smoothstep(-0.20,0.05,uEl);
+       vec3 V=normalize(cameraPosition-vW);float camD=length(cameraPosition-vW);
+       float bw=1.0-clamp(abs(dx)/62.0,0.0,1.0);
+       /* Backtrace the surface pattern downstream (+world Z). The source
+          point keeps its lateral distance from the meandering centreline, so
+          the current follows bends rather than sliding through a bank. */
+       float flowTime=uT;
+       float sourceZ=vQ.y-flowTime*7.0;
+       vec2 q=vec2(dx+riverC(sourceZ),sourceZ);
+       vec2 g=wave(q,vec2(0.94,0.342),0.44,0.024,0.4);
+       g+=wave(q,vec2(-0.78,0.626),0.73,0.016,2.1);
+       g+=wave(q,vec2(0.35,0.937),1.27,0.010,4.3);
+       g+=wave(q,vec2(-0.22,0.976),2.05,0.005,1.7);
+       float swell=vn2(q*0.026);
+       g*=0.72+0.40*swell;
+       /* Irregular cross-ripples travel with the same current as the waves. */
+       vec2 nq=q*0.38;
+       float ns=vn2(nq);
+       vec2 ng=vec2(vn2(nq+vec2(0.12,0.0)),vn2(nq+vec2(0.0,0.12)))-ns;
+       float rippleFade=1.0-smoothstep(0.25,1.2,length(fwidth(nq)));
+       g+=ng*0.24*rippleFade;
+       /* Broken, low-contrast surface streaks reveal the direction of flow.
+          No time wrapping, hard reset or independently flashing glitter. */
+       vec2 currentUV=vec2(dx*0.24,sourceZ*0.11);
+       float current=vn2(currentUV)*0.65+vn2(currentUV*2.13+3.7)*0.35;
+       float currentFade=1.0-smoothstep(0.35,1.2,length(fwidth(currentUV)));
+       float streak=smoothstep(0.48,0.76,current)*currentFade;
+       vec3 n=normalize(vec3(-g.x,1.0,-g.y));
+       vec3 R=reflect(-V,n);
+       float fres=0.02+0.98*pow(1.0-max(dot(n,V),0.0),5.0);
+       vec3 skyRef=mix(uHor,uZen,pow(clamp(R.y,0.0,1.0),0.65));
+       skyRef*=mix(0.50,0.70,dayK);
+       /* A soft valley-wall approximation darkens water under the banks.
+          No extra reflection render pass or screen-space tracing is needed. */
+       vec3 wallRef=mix(uValley*0.60,vec3(0.075,0.095,0.08),dayK);
+       float openSky=smoothstep(0.03,0.72,bw+g.x*sign(dx)*2.2);
+       vec3 refl=mix(wallRef,skyRef,openSky);
+       float deep=1.0-exp(-depth*0.32);
+       vec3 shallow=mix(vec3(0.025,0.065,0.075),vec3(0.075,0.18,0.15),dayK);
+       vec3 deepC=mix(vec3(0.008,0.021,0.038),vec3(0.022,0.072,0.092),dayK);
+       vec3 body=mix(shallow,deepC,deep);
+       float bed=vn2(vQ*0.48+g*1.6)*0.65+vn2(vQ*1.2)*0.35;
+       body+=vec3(0.12,0.105,0.075)*bed*(1.0-deep)*dayK;
+       vec3 col=mix(body,refl,fres*0.86);
+       /* Broad, low-energy highlights instead of independently thresholded
+          glitter. Reflection directions match the visible sun and moon. */
+       vec3 H=normalize(uSunDir+V),Hm=normalize(uMoonDir+V);
+       float sunVisible=smoothstep(-0.03,0.07,uEl);
+       float spec=pow(max(dot(n,H),0.0),1350.0)*0.48*sunVisible;
+       float moonSpec=pow(max(dot(n,Hm),0.0),720.0)*0.26*uNight;
+       float reflectionSpace=0.28+0.72*openSky;
+       col+=mix(vec3(0.92,0.94,0.96),uSun,0.35)*spec*reflectionSpace;
+       col+=vec3(0.50,0.61,0.78)*moonSpec*reflectionSpace;
+       col+=vec3(0.032,0.070,0.064)*uNight*openSky*(0.35+0.65*fres);
+       col+=vec3(0.045,0.065,0.095)*uNight*(0.45+0.55*fres)*(0.78+0.22*ns);
+       col+=mix(vec3(0.012,0.020,0.025),vec3(0.025,0.035,0.038),dayK)*(ns-0.35)*rippleFade;
+       col+=mix(vec3(0.022,0.034,0.043),vec3(0.065,0.085,0.088),dayK)*streak*(0.35+0.65*bw);
+       col+=vec3(0.055,0.070,0.080)*cameraFill(vW,n,uEl);
+       /* Foam is sparse and confined to shallow shoreline water, not painted
+          as bright flakes over the entire river. */
+       float shore=(1.0-smoothstep(0.35,1.9,depth))*smoothstep(0.0,0.25,depth);
+       float foam=shore*smoothstep(0.57,0.77,vn2(q*0.32))*0.20;
+       col=mix(col,mix(vec3(0.09,0.12,0.15),vec3(0.42,0.46,0.43),dayK),foam);
+       float a=smoothstep(0.0,1.6,depth);
+       float f=fogOf(camD,${FOGK});
+       vec3 fogc=mix(uHor,uZen,mix(0.35,0.18,dayK))*mix(1.0,1.22,dayK);
+       gl_FragColor=vec4(mix(fogc,col,f),a*0.97);}`})));}
 
 /* ---- river mist: a thin drifting sheet just above the water, only over the channel. Thicker in the cool
         hours, nearly gone at midday. Additive so it lifts the water rather than greying it. ---- */
@@ -353,71 +398,97 @@ const TW=2000,TD=3200;
       vec3 c=mix(uValley*1.5,mix(uHor,uZen,0.4),0.55)*(0.75+0.35*dayK)+vec3(0.22,0.26,0.36)*uNight;
       gl_FragColor=vec4(c,a);}`})));}
 
-/* ---- flora: cherry trees on the river banks, pines a band above them.
-        One instanced draw call per species. Each tree keeps a fixed spot in NOISE space (the terrain's own
-        coordinates) so it rides the ground exactly and wraps with the terrain window; the vertex shader
-        re-evaluates height() at the foot and collapses trees that land in water, too high or on a cliff.
-        Cherry = branching trunk (tapered cylinders) + ~40 blossom clusters drawn as camera-facing discs
-        with a noisy fluffy edge and sphere-shaded so they read as volume. Pine = trunk + stacked whorls
-        of open cones whose rims are eaten away by noise into ragged needle layers. ---- */
+/* ---- flora: branching cherry crowns and layered evergreen sprays.
+   Foliage uses intersecting, world-oriented cards rather than billboards. Each
+   species remains one instanced draw call; height() anchors every tree to land. */
 const rnd=(i,k)=>hash(i*1.31+k*7.7,k*0.37+2.1);
 function treeBuilder(){const pos=[],nor=[],part=[],corner=[],cprop=[],seed=[];
   const push=(g,pt,center,r,sd)=>{const ng=g.index?g.toNonIndexed():g;const P=ng.attributes.position.array,N=ng.attributes.normal.array;
     for(let i=0;i<P.length;i+=3){pos.push(P[i],P[i+1],P[i+2]);nor.push(N[i],N[i+1],N[i+2]);part.push(pt);corner.push(0,0);
-      cprop.push(center[0],center[1],center[2],r);seed.push(sd);}};
-  const quad=(c,r,sd,pt)=>{for(const [x,y] of [[-1,-1],[1,-1],[1,1],[-1,-1],[1,1],[-1,1]]){
-    pos.push(c[0],c[1],c[2]);nor.push(0,1,0);part.push(pt===undefined?2:pt);corner.push(x,y);cprop.push(c[0],c[1],c[2],r);seed.push(sd);}};
+      cprop.push(center[0],center[1],center[2],r);seed.push(sd);}
+    if(ng!==g)ng.dispose();g.dispose();};
+  const spray=(c,r,sd,pt)=>{
+    /* Crossed planes intersect through a real branch tip. Their orientation is
+       fixed in the tree, so foliage does not rotate toward a moving camera. */
+    const planes=pt===3?3:2;
+    for(let plane=0;plane<planes;plane++){
+      const a=sd*2.399+plane*Math.PI/planes,tilt=pt===3?0.32:0.65;
+      const right=new THREE.Vector3(Math.cos(a),0,Math.sin(a));
+      const up=new THREE.Vector3(-Math.sin(a)*tilt,1,Math.cos(a)*tilt).normalize();
+      const normal=new THREE.Vector3().crossVectors(right,up).normalize();
+      const asp=pt===3?0.54:0.83;
+      for(const [x,y] of [[-1,-1],[1,-1],[1,1],[-1,-1],[1,1],[-1,1]]){
+        const p=new THREE.Vector3(...c).addScaledVector(right,x*r).addScaledVector(up,y*r*asp);
+        pos.push(p.x,p.y,p.z);nor.push(normal.x,normal.y,normal.z);part.push(pt);corner.push(x,y);
+        cprop.push(c[0],c[1],c[2],r);seed.push(sd+plane*0.37);
+      }
+    }
+  };
   const done=()=>{const geo=new THREE.InstancedBufferGeometry();
     geo.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));geo.setAttribute('normal',new THREE.Float32BufferAttribute(nor,3));
     geo.setAttribute('part',new THREE.Float32BufferAttribute(part,1));geo.setAttribute('corner',new THREE.Float32BufferAttribute(corner,2));
     geo.setAttribute('cprop',new THREE.Float32BufferAttribute(cprop,4));geo.setAttribute('cseed',new THREE.Float32BufferAttribute(seed,1));return geo;};
-  return {push,quad,done};}
-/* tapered limb along +Y of a matrix */
-function limb(B,r0,r1,len,m,center){const g=new THREE.CylinderGeometry(r1,r0,len,6,1,true);g.translate(0,len/2,0);g.applyMatrix4(m);B.push(g,0,center||[0,0,0],0,0);}
-const tipOf=(m,len)=>new THREE.Vector3(0,len,0).applyMatrix4(m);
-function cherryTree(){const B=treeBuilder();const I=new THREE.Matrix4();
-  const M=(...ms)=>ms.reduce((acc,m)=>acc.multiply(m),new THREE.Matrix4());
-  const T=(x,y,z)=>new THREE.Matrix4().makeTranslation(x,y,z),RY=a=>new THREE.Matrix4().makeRotationY(a),RZ=a=>new THREE.Matrix4().makeRotationZ(a);
-  limb(B,1.35,0.95,4.8,M(RZ(0.06)));
-  const tips=[];let k=0;
-  for(let i=0;i<5;i++){const ang=i*1.2566+rnd(i,1)*0.7,tilt=0.55+rnd(i,2)*0.35,len=4.6+rnd(i,3)*2.0;
-    const m=M(T(0,4.6,0),RY(ang),RZ(tilt));limb(B,0.62,0.30,len,m);
-    for(let j=0;j<2;j++){const m2=M(m,T(0,len,0),RY((j?1:-1)*(0.8+rnd(i,10+j)*0.7)),RZ(0.40+rnd(i,20+j)*0.45));
-      const l2=3.0+rnd(i,30+j)*1.6;limb(B,0.30,0.14,l2,m2);
-      for(let q=0;q<3;q++){const m3=M(m2,T(0,l2*(0.55+q*0.22),0),RY(q*2.1+rnd(i,40+q+j*3)*1.5),RZ(0.5+rnd(i,50+q)*0.5));
-        const l3=1.6+rnd(i,60+q+j)*1.2;limb(B,0.12,0.05,l3,m3);
-        tips.push([tipOf(m3,l3),1.5+rnd(i,70+q+j)*0.6]);tips.push([tipOf(m3,l3*0.45),1.2+rnd(i,80+q+j)*0.5]);}
-      tips.push([tipOf(m2,l2),1.6]);tips.push([tipOf(m2,l2*0.5),1.3]);}
-    tips.push([tipOf(m,len),1.5]);}
-  for(const [c,r0] of tips){const r=r0*1.15;B.quad([c.x,c.y,c.z],r,k++);
-    for(let q=0;q<3;q++){const o=new THREE.Vector3(rnd(k,q)-0.5,rnd(k,q+3)-0.35,rnd(k,q+6)-0.5).multiplyScalar(r*1.6);
-      B.quad([c.x+o.x,c.y+o.y,c.z+o.z],r*(0.5+rnd(k,q+9)*0.4),k*3+q+1);}}
+  return {push,spray,done};}
+/* Limb endpoints share their exact positions with the next branch segment. */
+function branch(B,a,b,r0,r1){const delta=new THREE.Vector3().subVectors(b,a);
+  const g=new THREE.CylinderGeometry(r1,r0,delta.length(),5,1,true);
+  g.applyQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0,1,0),delta.clone().normalize()));
+  g.translate((a.x+b.x)/2,(a.y+b.y)/2,(a.z+b.z)/2);B.push(g,0,[0,0,0],0,0);}
+function cherryTree(){const B=treeBuilder();let k=0;
+  const root=new THREE.Vector3(0,0,0),fork=new THREE.Vector3(0.28,4.0,-0.15);
+  branch(B,root,new THREE.Vector3(0.10,2.0,0.12),0.72,0.56);
+  branch(B,new THREE.Vector3(0.10,2.0,0.12),fork,0.56,0.38);
+  for(let i=0;i<6;i++){
+    const a=i*2.399+0.28*rnd(i,2),reach=3.4+rnd(i,4)*2.0;
+    const elbow=new THREE.Vector3(Math.cos(a)*reach,5.5+rnd(i,5)*2.0,Math.sin(a)*reach);
+    branch(B,fork,elbow,0.25+rnd(i,1)*0.07,0.12);
+    for(let j=0;j<3;j++){
+      const az=a+(j-1)*0.78,dist=2.0+rnd(i,j+10)*1.6;
+      const tip=elbow.clone().add(new THREE.Vector3(Math.cos(az)*dist,0.5+rnd(i,j+20)*4.4,Math.sin(az)*dist));
+      branch(B,elbow,tip,0.105,0.032);
+      const inner=elbow.clone().lerp(tip,0.55);B.spray([inner.x,inner.y,inner.z],1.8,k++,2);
+      for(let q=0;q<3;q++){
+        const ang=az+(q-1)*1.0,len=1.1+rnd(i,j*3+q+30)*1.2;
+        const twig=tip.clone().add(new THREE.Vector3(Math.cos(ang)*len,0.4+rnd(i,q+j+40)*1.1,Math.sin(ang)*len));
+        branch(B,tip,twig,0.035,0.008);
+        const size=1.8+rnd(i,j*3+q+60)*1.05;
+        B.spray([twig.x,twig.y,twig.z],size,k++,2);
+        const mid=tip.clone().lerp(twig,0.35);
+        B.spray([mid.x,mid.y,mid.z],size*0.82,k++,2);
+      }
+    }
+  }
+  /* A few higher shoots break the umbrella outline without filling every gap. */
+  for(let i=0;i<3;i++){
+    const tip=new THREE.Vector3((rnd(i,91)-0.5)*4,10.6+rnd(i,92)*2,(rnd(i,93)-0.5)*4);
+    branch(B,fork,tip,0.12,0.02);B.spray([tip.x,tip.y,tip.z],2.1,k++,2);
+  }
   return B.done();}
-function pineTree(){const B=treeBuilder();
-  const M=(...ms)=>ms.reduce((acc,m)=>acc.multiply(m),new THREE.Matrix4());
-  const T=(x,y,z)=>new THREE.Matrix4().makeTranslation(x,y,z),RY=a=>new THREE.Matrix4().makeRotationY(a),RZ=a=>new THREE.Matrix4().makeRotationZ(a);
-  limb(B,1.15,0.16,25,new THREE.Matrix4());                                  // trunk, tapering to the leader
-  const NW=8;let k=0;
-  for(let w=0;w<NW;w++){const f=w/(NW-1),y=3.6+f*19.0;
-    const rad=(6.3*Math.pow(1.0-f,1.15)+0.75)*(0.9+rnd(w,4)*0.2);
-    const nb=6;
-    for(let i=0;i<nb;i++){const ang=(i/nb)*6.283+w*0.79+rnd(w,i)*0.5;
-      const droop=1.15+(1.0-f)*0.78+rnd(w,i+9)*0.12;                         // upper branches lift, lower ones droop
-      const len=rad*(0.85+rnd(w,i+3)*0.3);
-      const m=M(T(0,y,0),RY(ang),RZ(droop));
-      limb(B,0.26*(1.0-f)+0.09,0.05,len,m);
-      /* overlapping needle sprays clothe the whole branch, biggest near the middle */
-      for(let q=0;q<3;q++){const t=0.34+q*0.31,c=tipOf(m,len*t);
-        B.quad([c.x,c.y,c.z],len*(0.62-q*0.11),k*1.7+q+0.3,3);k++;}
-      const tp=tipOf(m,len);B.quad([tp.x,tp.y,tp.z],len*0.34,k*2.3+0.7,3);k++;}}
-  const lead=[[0,23.2,0,2.4],[0,24.8,0,1.7],[0,26.0,0,1.1]];                 // leader tuft
-  for(const [x,y,z,r] of lead){B.quad([x,y,z],r,k++*1.3,3);}
+function pineTree(){const B=treeBuilder();let k=0;
+  branch(B,new THREE.Vector3(0,0,0),new THREE.Vector3(0.22,25,0.12),0.55,0.045);
+  for(let level=0;level<9;level++){
+    const f=level/8,y=3.6+level*2.35,rad=(1-f)*5.0+0.6;
+    const count=level>6?4:5;
+    for(let i=0;i<count;i++){
+      const a=i/count*Math.PI*2+level*2.399+rnd(level,i)*0.5;
+      const len=rad*(0.78+rnd(level,i+7)*0.38);
+      const base=new THREE.Vector3(0.22*y/25,y+(rnd(level,i+12)-0.5)*0.7,0.12*y/25);
+      const tip=base.clone().add(new THREE.Vector3(Math.cos(a)*len,-0.25-len*0.12,Math.sin(a)*len));
+      branch(B,base,tip,0.11*(1-f)+0.025,0.01);
+      for(let q=0;q<3;q++){
+        const at=base.clone().lerp(tip,0.35+q*0.28);
+        const r=(len*(0.57-q*0.09)+0.35)*(0.88+rnd(level,q+i+20)*0.22);
+        B.spray([at.x,at.y,at.z],r,k++,3);
+      }
+    }
+  }
+  for(const [y,r] of [[23.2,1.1],[24.2,0.8],[25.0,0.4]])B.spray([0.22,y,0.12],r,k++,3);
   return B.done();}
 const cherryGeo=cherryTree(),pineGeo=pineTree();
-/* scatter along the river in groves: dx = signed distance from the river centre line */
+/* Keep grove positions unchanged; per-instance proportions vary the silhouettes. */
 function plant(geo,n,seed,dxMin,dxMax,thr){const off=[],sc=[],rot=[],tint=[];
   for(let i=0;i<n*4&&off.length<n*2;i++){const zn=hash(i,seed)*TD,side=hash(i,seed+7)<0.5?-1:1;
-    if(vnoise(zn*0.0035+seed,side*3.3)<thr)continue;                      // grove mask
+    if(vnoise(zn*0.0035+seed,side*3.3)<thr)continue;
     off.push(side*(dxMin+hash(i,seed+3)*(dxMax-dxMin)),zn);
     sc.push(0.7+hash(i,seed+5)*0.6);rot.push(hash(i,seed+9)*6.283);tint.push(hash(i,seed+11));}
   geo.setAttribute('aOff',new THREE.InstancedBufferAttribute(new Float32Array(off),2));
@@ -428,78 +499,80 @@ function plant(geo,n,seed,dxMin,dxMax,thr){const off=[],sc=[],rot=[],tint=[];
 plant(cherryGeo,LITE?140:220,2.0,58,120,0.44);
 plant(pineGeo,LITE?150:240,5.0,90,260,0.42);
 const TREE_VS=`uniform float uScroll,uT,uKind;attribute vec2 aOff,corner;attribute float aScale,aRot,aTint,part,cseed;attribute vec4 cprop;
-  varying vec3 vN,vL,vW;varying vec2 vC;varying float vF,vPart,vTint,vSeed,vR;${FOG}${GNOISE}${HFN}
+  varying vec3 vN,vL,vW,vCrown,vCluster;varying vec2 vC;varying float vF,vPart,vTint,vSeed,vCavity;${FOG}${GNOISE}${HFN}
   void main(){float TDc=${TD}.0;
-    float lz=mod(aOff.y-uScroll+TDc*0.5,TDc)-TDc*0.5;float qz=lz+uScroll;
-    float x=riverC(qz)+aOff.x;float h=height(vec2(x,qz));
-    float e=6.0;float slope=abs(height(vec2(x+e,qz))-h)+abs(height(vec2(x,qz+e))-h);
+    float lz=mod(aOff.y-uScroll+TDc*0.5,TDc)-TDc*0.5,qz=lz+uScroll;
+    float x=riverC(qz)+aOff.x,h=height(vec2(x,qz));
+    float e=6.0,slope=abs(height(vec2(x+e,qz))-h)+abs(height(vec2(x,qz+e))-h);
     float hi=uKind<0.5?70.0:140.0,lo=uKind<0.5?1.5:30.0;
     float ok=step(lo,h)*(1.0-smoothstep(hi-20.0,hi,h))*(1.0-smoothstep(9.0,14.0,slope));
-    float s=aScale*ok;float c=cos(aRot),sn=sin(aRot);
-    vec3 p=position;
-    /* wind: a slow gust envelope times a faster flutter. Applied AFTER the tree's own rotation so every
-       tree bends the same way in world space, and scaled by height so trunks barely move. */
-    float gust=0.60+0.40*sin(uT*0.23+aOff.y*0.0017);
-    float wv=(sin(uT*1.05+aOff.y*0.011+cseed*0.7)+0.42*sin(uT*2.15+cseed*1.9))*gust;
+    float s=aScale*ok,c=cos(aRot),sn=sin(aRot);
+    vec3 proportions=vec3(0.80+aTint*0.38,0.90+fract(aTint*7.3)*0.20,0.90+fract(aTint*3.1)*0.23);
+    vec3 p=position*proportions;
+    /* The same crown lean affects wood and leaves, so branches stay connected. */
+    p.x+=(aTint-0.5)*max(p.y-3.0,0.0)*0.14;
+    float gust=0.65+0.35*sin(uT*0.23+aOff.y*0.0017);
+    float wind=sin(uT*0.85+aOff.y*0.011)*gust;
     vec3 r=vec3(c*p.x-sn*p.z,p.y,sn*p.x+c*p.z)*s;
-    float stiff=part<0.5?0.008:0.021;
-    float bend=wv*stiff*max(r.y,0.0);r.x+=bend*0.94;r.z+=bend*0.34;
-    vN=vec3(c*normal.x-sn*normal.z,normal.y,sn*normal.x+c*normal.z);vPart=part;vTint=aTint;vSeed=cseed;vR=cprop.w;
-    vL=position-cprop.xyz;vC=corner;
-    vec4 wp=modelMatrix*vec4(x+r.x,h-0.6*s+r.y,lz+r.z,1.0);vec4 mv=viewMatrix*wp;vW=wp.xyz;
-    if(part>1.5){                                                           // foliage: camera-facing sprite
-      float asp=part>2.5?0.58:1.0;                                          // needle sprays are flatter than blossom balls
-      mv.xy+=corner*vec2(1.0,asp)*cprop.w*s;
-      mv.x+=wv*0.30*s;mv.y+=sin(uT*1.7+cseed*3.1)*0.16*s;}                  // foliage flutters in the gust
+    r.x+=wind*0.016*max(r.y,0.0);r.z+=wind*0.006*max(r.y,0.0);
+    if(part>1.5)r+=normal*sin(uT*1.6+cseed*1.8)*0.045*s;
+    vec3 nn=normalize(normal/proportions);vN=vec3(c*nn.x-sn*nn.z,nn.y,sn*nn.x+c*nn.z);
+    vec3 cn=uKind<0.5?vec3(cprop.x/7.5,(cprop.y-7.0)/4.0,cprop.z/7.5):vec3(cprop.x/5.0,0.45,cprop.z/5.0);
+    vCavity=uKind<0.5?clamp(length(cn)*0.65,0.30,1.0):clamp(length(cn.xz)*0.65+0.3,0.3,1.0);
+    cn=normalize(cn+vec3(0.0,0.10,0.0));vCrown=vec3(c*cn.x-sn*cn.z,cn.y,sn*cn.x+c*cn.z);
+    vec3 cluster=(position-cprop.xyz)/max(cprop.w,0.1);
+    vCluster=vec3(c*cluster.x-sn*cluster.z,cluster.y,sn*cluster.x+c*cluster.z);
+    vPart=part;vTint=aTint;vSeed=cseed;vL=position;vC=corner;
+    vec4 wp=modelMatrix*vec4(x+r.x,h-0.35*s+r.y,lz+r.z,1.0);vec4 mv=viewMatrix*wp;vW=wp.xyz;
     vF=fogOf(-mv.z,${FOGK});gl_Position=projectionMatrix*mv;}`;
-const TREE_FS=`uniform vec3 uZen,uHor,uValley,uSun,uSunDir;uniform float uEl,uNight,uKind;uniform mat3 uCamM;
-  varying vec3 vN,vL,vW;varying vec2 vC;varying float vF,vPart,vTint,vSeed,vR;${GNOISE}${LAMPF}
+const TREE_FS=`uniform vec3 uZen,uHor,uValley,uSun,uSunDir;uniform float uEl,uNight,uKind;
+  varying vec3 vN,vL,vW,vCrown,vCluster;varying vec2 vC;varying float vF,vPart,vTint,vSeed,vCavity;${GNOISE}${LAMPF}
   void main(){
-    vec3 L=normalize(vec3(uSunDir.x,max(uSunDir.y,0.12),uSunDir.z));vec3 Lm=normalize(vec3(-uSunDir.x*0.9,0.45,-0.6));
-    float dayK=smoothstep(-0.20,0.05,uEl);
-    vec3 keyC=mix(vec3(0.72,0.80,1.05),uSun,dayK);
-    vec3 n;vec3 alb;float ao=1.0,trans=0.0;
-    if(vPart>2.5){                                                      /* pine needle spray */
-      float rr=length(vec2(vC.x,vC.y*1.45));if(rr>1.15)discard;
-      float fl=fbm2(vC*2.1+vSeed*5.0);
-      float body=smoothstep(1.06,0.52,rr-(fl-0.5)*0.5);
-      float nd=vn2(vec2(vC.x*3.2,vC.y*26.0+vSeed*3.0));                      /* fine needle streaks */
-      float a=body*(0.28+0.72*smoothstep(0.34,0.66,nd));if(a<0.45)discard;
-      vec3 nv=normalize(vec3(vC.x*0.75,vC.y*0.75,0.85));n=normalize(uCamM*nv+vec3(0.0,0.35,0.0));
-      vec3 dark=vec3(0.055,0.135,0.095),mid=vec3(0.13,0.28,0.16),tip=mix(vec3(0.22,0.40,0.20),vec3(0.31,0.47,0.23),vTint);
-      alb=mix(dark,mix(mid,tip,smoothstep(0.35,1.0,rr)),smoothstep(0.05,0.8,rr));
-      alb*=0.80+0.20*nd;
-      ao=0.52+0.48*smoothstep(-0.9,0.9,vC.y)*0.6+0.25*rr;                    /* undersides darker */
-      vec3 Vd=normalize(cameraPosition-vW);float back=max(dot(-Vd,L),0.0)*dayK;
-      trans=back*0.35*smoothstep(0.2,1.0,rr);}
-    else if(vPart>1.5){                                                           /* blossom cluster */
-      float rr=length(vC);if(rr>1.0)discard;
-      /* many small round blossoms packed into a fluffy silhouette */
-      float fl=fbm2(vC*2.4+vSeed*7.1);
-      float body=smoothstep(0.86,0.50,rr-(fl-0.5)*0.55);
-      float fl2=vn2(vC*7.0+vSeed*3.3);float petals=smoothstep(0.32,0.62,fl2);
-      float a=body*(0.35+0.65*petals);if(a<0.42)discard;
-      float rrc=min(rr,0.999);
-      vec3 nv=vec3(vC.x,vC.y,sqrt(1.0-rrc*rrc));n=normalize(uCamM*nv);       /* sphere-shaded in view space */
-      vec3 pale=vec3(0.99,0.84,0.89),mid=vec3(0.97,0.66,0.76),deep=vec3(0.88,0.40,0.58);
-      float tone=clamp(vTint*0.5+fract(vSeed*0.37)*0.5,0.0,1.0);
-      alb=mix(mix(mid,pale,tone),deep,smoothstep(0.55,0.25,fl2)*0.55);      /* darker flower centres */
-      alb=mix(alb,vec3(1.0,0.97,0.98),smoothstep(0.78,0.95,fl2)*0.5);       /* white petal edges */
-      ao=0.62+0.38*nv.z;
-      /* sun coming through the petals: rim light when the sun is behind the tree */
-      vec3 Vd=normalize(cameraPosition-vW);float back=max(dot(-Vd,L),0.0)*dayK;
-      trans=back*(1.0-nv.z*0.7)*0.9;}
-    else{                                                                    /* bark */
-      n=normalize(vN);float bk=vn2(vec2(atan(vN.z,vN.x)*6.0,vL.y*1.6));
-      alb=mix(vec3(0.20,0.15,0.13),vec3(0.36,0.30,0.27),bk)*(uKind<0.5?0.85:1.0);}
-    float diff=max(dot(n,L),0.0)*dayK+max(dot(n,Lm),0.0)*(1.0-dayK)*1.05;
-    float up=n.y*0.5+0.5;vec3 amb=mix(uValley*1.4,mix(uHor,uZen,0.5)*1.3,up);
-    amb=mix(amb,vec3(dot(amb,vec3(0.299,0.587,0.114)))*1.04,dayK*0.80);
-    float ex=mix(1.30,1.45,dayK);
-    vec3 col=alb*ao*(amb*(0.55+0.25*dayK)+keyC*diff*(0.80+0.75*dayK))*ex;
-    col+=uSun*alb*trans*0.9+uSun*0.05*dayK*step(1.5,vPart);              /* translucent petals + sun catch */
-    col+=vec3(0.07,0.13,0.12)*uNight*up*0.6;
-    col+=alb*vec3(1.0,0.90,0.78)*lamp(vW,n,dayK)*(vPart>1.5?1.0:0.9);       /* camera head-light: blossoms glow */
+    vec3 L=normalize(vec3(uSunDir.x,max(uSunDir.y,0.12),uSunDir.z)),Lm=normalize(vec3(-uSunDir.x*0.9,0.45,-0.6));
+    float dayK=smoothstep(-0.20,0.05,uEl);vec3 keyC=mix(vec3(0.66,0.74,0.92),mix(vec3(0.95,0.97,1.0),uSun,0.22),dayK);
+    vec3 n=normalize(vN)*(gl_FrontFacing?1.0:-1.0),alb;float ao=1.0,trans=0.0;
+    vec3 V=normalize(cameraPosition-vW);
+    if(vPart>1.5){
+      float rr=length(vC);if(rr>1.12)discard;
+      float lobes=vn2(vC*3.4+vSeed*5.1);
+      float edge=rr+(lobes-0.5)*0.36;
+      float cover=1.0-smoothstep(0.55,1.0,edge);
+      float leaf=vn2(vC*18.0+vSeed*7.3);
+      /* Dense interiors and broken edges, rather than uniform screen-door noise.
+         Small leaves merge with distance to avoid glittering pinholes. */
+      float fine=1.0-smoothstep(0.18,0.65,length(fwidth(vC*18.0)));
+      float holes=mix(0.70,0.35+0.65*smoothstep(0.22,0.62,leaf),fine);
+      if(cover*holes<0.30)discard;
+      vec3 crown=normalize(vCrown);
+      n=normalize(crown*0.50+normalize(vCluster+n*0.7)*0.50);
+      if(vPart>2.5){
+        float needles=vn2(vec2(vC.x*31.0+vC.y*12.0,vC.y*7.0)+vSeed);
+        alb=mix(vec3(0.065,0.13,0.08),vec3(0.19,0.285,0.135),clamp(lobes*0.55+vTint*0.25+needles*0.20,0.0,1.0));
+        ao=(0.48+0.38*vCavity)*(0.82+0.18*lobes);
+        trans=pow(max(dot(-V,L),0.0),2.0)*0.12*dayK;
+      }else{
+        vec3 blush=mix(vec3(0.68,0.40,0.45),vec3(0.89,0.67,0.68),vTint);
+        alb=mix(blush,vec3(0.94,0.85,0.80),smoothstep(0.20,0.88,leaf*0.6+lobes*0.4));
+        /* Occasional young leaves break up a single solid pink canopy. */
+        float green=smoothstep(0.77,0.88,vn2(vC*8.0+vSeed*2.0))*0.55;
+        alb=mix(alb,vec3(0.25,0.31,0.16),green);
+        ao=(0.48+0.40*vCavity)*(0.76+0.24*lobes);
+        trans=pow(max(dot(-V,L),0.0),2.0)*0.24*dayK;
+      }
+    }else{
+      float bark=vn2(vec2(atan(vL.z,vL.x)*9.0,vL.y*0.65));
+      float grain=vn2(vL.xz*15.0+vL.y*0.2);
+      alb=mix(vec3(0.14,0.12,0.105),vec3(0.32,0.275,0.225),bark)*(0.85+grain*0.2);
+      ao=0.78+0.22*smoothstep(0.0,4.0,vL.y);
+    }
+    float wrap=vPart>1.5?0.45:0.0;
+    float diff=max((dot(n,L)+wrap)/(1.0+wrap),0.0)*dayK+max((dot(n,Lm)+wrap)/(1.0+wrap),0.0)*(1.0-dayK);
+    vec3 amb=mix(uValley*1.1,mix(uHor,uZen,0.5)*1.3,n.y*0.5+0.5);
+    amb=mix(amb,vec3(dot(amb,vec3(0.299,0.587,0.114))),dayK*0.80);
+    vec3 col=alb*(amb*(0.65+0.20*dayK)*ao+keyC*diff*(0.65+0.26*dayK)*mix(0.7,1.0,ao))*mix(1.20,1.28,dayK);
+    col+=alb*keyC*trans;
+    col+=alb*vec3(1.0,0.94,0.86)*cameraFill(vW,n,uEl)*0.70;
+    col+=alb*vec3(0.045,0.085,0.08)*uNight*(0.4+0.6*max(n.y,0.0));
     vec3 fogc=mix(uHor,uZen,mix(0.35,0.18,dayK))*mix(1.0,1.22,dayK);
     gl_FragColor=vec4(mix(fogc,col,vF),1.0);}`;
 for(const [geo,kind] of [[cherryGeo,0],[pineGeo,1]]){

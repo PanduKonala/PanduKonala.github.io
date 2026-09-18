@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """
-Generate the noir/ site. Content is read from the ORIGINAL pages one level up,
-so nothing is retyped by hand: run this from noir/tools/ any time the source
-pages change.
+Generate the noir/ site. Legacy content is read from the ORIGINAL pages one
+level up. New Noir detail pages live in tools/detail_entries.json and share
+the same renderer. Run whenever either source changes.
 
     python3 noir/tools/build.py
 
 Everything it writes is inside noir/. The old site is never touched.
 """
-import re, html, os, pathlib
+import re, html, os, pathlib, json
 
 HERE = pathlib.Path(__file__).resolve().parent
 NOIR = HERE.parent
@@ -91,7 +91,6 @@ def shell(*, up, title, desc, body, hour=None, plate=False, page="", current="",
   <div class="links">
     <a href="https://github.com/PanduKonala" target="_blank" rel="noopener">GitHub</a>
     <a href="https://www.linkedin.com/in/pandu-konala-179064149/" target="_blank" rel="noopener">LinkedIn</a>
-    <a href="https://app.hackthebox.com/profile/99839" target="_blank" rel="noopener">Hack The Box</a>
     <a href="{up}assets/files/CV_Konala_Pandu_2026.pdf" target="_blank" rel="noopener">CV</a>
   </div>
 </footer>
@@ -123,9 +122,27 @@ RESEARCH = entries_from_sample("research")
 PROJECTS = entries_from_sample("projects")
 assert len(RESEARCH) == 8 and len(PROJECTS) == 7, (len(RESEARCH), len(PROJECTS))
 
+# New entries live here; preserve the original design sample as a historical input.
+# Titles and summaries verified against the linked abstract / project README.
+RESEARCH.insert(0, dict(
+    href="blog-work/paper_ansible_ai/paper_ansible_ai.html", yr="Aug 2026",
+    title="Evaluating and Preventing Security Smells in AI-Generated Ansible Code",
+    abs="Evaluation of 16 AI models generating Ansible roles, with security-guided prompts "
+        "to prevent security smells and improve CIS benchmark compliance.",
+    kcls="preprint", kind="Preprint"))
+PROJECTS.insert(0, dict(
+    href="blog-projects/anvil/anvil.html", yr="Ongoing",
+    title="Project Anvil: Agentic Ansible Harness",
+    abs="Research proof of concept for generating and remediating Ansible roles with "
+        "multi-agent repair loops, quality scoring and live compliance checks.",
+    kcls="", kind="Project"))
+
 def entry_html(r, up):
     k = f'kind {r["kcls"]}'.strip()
-    return (f'<a class="entry" href="{up}{r["href"]}">'
+    external = r["href"].startswith(("https://", "http://"))
+    href = r["href"] if external else up + r["href"]
+    attrs = ' target="_blank" rel="noopener"' if external else ""
+    return (f'<a class="entry" href="{html.escape(href, quote=True)}"{attrs}>'
             f'<span class="yr">{r["yr"]}</span>'
             f'<h4>{r["title"]}</h4>'
             f'<p class="abs">{r["abs"]}</p>'
@@ -163,9 +180,14 @@ DETAILS = sorted(
     [p for p in (SRC / "blog-projects").glob("*/*.html")]
 )
 
+# Noir-native entries use the same facts/sections schema as parsed legacy pages.
+NEW_DETAILS = json.loads((HERE / "detail_entries.json").read_text(encoding="utf-8"))
+
 def build_detail(p):
-    rel  = p.relative_to(SRC).as_posix()          # blog-work/x/x.html
-    d    = parse_detail(rel)
+    rel = p.relative_to(SRC).as_posix()
+    return render_detail(rel, parse_detail(rel))
+
+def render_detail(rel, d):
     up   = "../../"
     is_proj = rel.startswith("blog-projects")
     back = "projects.html" if is_proj else "writing.html"
@@ -311,10 +333,9 @@ def build_about():
     d = about_data()
     pillars = "".join(f'<div class="pillar"><h4>{h}</h4><p>{p}</p></div>' for h, p in d["pillars"])
     edu = "".join(
-        f'<div class="row"><span class="when">{e["date"]}</span>'
-        f'<div><h4>{e["degree"]}</h4><div class="where">{" &middot; ".join(e["lines"])}</div></div>'
-        f'<span class="tag"><img src="assets/img/{e["logo"]}" alt="" height="26" '
-        f'style="vertical-align:middle;opacity:.85;filter:grayscale(.3)"></span></div>'
+        f'<div class="pillar"><div class="edu-meta"><span class="mono">{e["date"]}</span>'
+        f'<img src="assets/img/{e["logo"]}" alt="" height="44"></div>'
+        f'<h4>{e["degree"]}</h4><p>{"<br>".join(e["lines"])}</p></div>'
         for e in d["edu"])
     body = f"""
 <div class="masthead compact">
@@ -348,7 +369,8 @@ def build_about():
 <section class="slab">
   <div class="panel rv">
     <div class="shead"><span class="mono" style="color:var(--gold)">&sect; 03</span><span class="dash"></span><span class="mono">2015&ndash;2026</span><h2>Education</h2></div>
-<div class="tl">{edu}</div></div>
+    <div class="pillars education">{edu}</div>
+  </div>
 </section>
 
 
@@ -393,17 +415,20 @@ def copy_local_pdfs():
 def main():
     build_index()
     build_list("writing.html", "01", "Research",
-               "Peer-reviewed papers and patents on Infrastructure as Code security, "
+               "Papers, preprints and patents on Infrastructure as Code security, "
                "supply-chain integrity and decentralised systems.",
                RESEARCH, f"{len(RESEARCH)} papers &amp; patents")
     build_list("projects.html", "02", "Projects",
-               "Things built end to end: quantum authentication, IoT safety systems, "
-               "machine learning and cryptography.",
+               "Things built end to end: agentic infrastructure automation, quantum authentication, "
+               "IoT safety systems, machine learning and cryptography.",
                PROJECTS, f"{len(PROJECTS)} builds")
     build_about()
     build_404()
     for p in DETAILS:
         rel, nf, ns = build_detail(p)
+        print(f"  {rel:58s} {nf} facts, {ns} sections")
+    for rel, data in NEW_DETAILS.items():
+        _, nf, ns = render_detail(rel, data)
         print(f"  {rel:58s} {nf} facts, {ns} sections")
     copy_local_pdfs()
     print("built:", len(list(NOIR.rglob('*.html'))), "html files")

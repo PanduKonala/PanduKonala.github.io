@@ -1,0 +1,131 @@
+{
+  "blog-work/paper_ansible_ai/paper_ansible_ai.html": {
+    "title": "Evaluating and Preventing Security Smells in AI-Generated Ansible Code",
+    "badge": "Research Preprint",
+    "facts": [
+      [
+        "Repository",
+        [
+          "arXiv:2608.24962"
+        ]
+      ],
+      [
+        "Submitted",
+        [
+          "25 August 2026"
+        ]
+      ],
+      [
+        "Field",
+        [
+          "Infrastructure as Code / AI / Cyber Security"
+        ]
+      ],
+      [
+        "Authors",
+        [
+          "Pandu Ranga Reddy Konala",
+          "Vimal Kumar",
+          "David Bainbridge",
+          "Junaid Haseeb"
+        ]
+      ]
+    ],
+    "sections": [
+      [
+        "Abstract",
+        [
+          "<p>AI coding assistants generate Infrastructure as Code, yet no work has examined whether this code meets security requirements. This matters because security smells in infrastructure code propagate to deployed systems, producing infrastructure that is insecure and untrustworthy. We evaluate 16 AI models generating Ansible roles for Apache Tomcat v10 and MongoDB v7, analysing 278 Ansible roles against CIS benchmarks. Without security guidance, all 16 AI models produced code containing security smells, resulting in vulnerable infrastructure that fails compliance verification and underperforms code written by human developers. We introduce an approach integrating Ansible best practices and CIS benchmarks into prompts through an extended CO-STAR framework, enabling security smell prevention during synthesis rather than detection after deployment. When this approach is applied, 4 out of 16 models generate compliant code, with the leading model achieving 95%-100% CIS compliance, a fourfold improvement over humans at 23%-43%, with overall code quality improving by 19%-49%. The remaining 12 models fail not because they cannot generate code but because they cannot follow instructions with multiple constraints. For capable models, the approach requires no retraining and can be adopted through system prompts.</p>"
+        ]
+      ],
+      [
+        "Key Focus Areas",
+        [
+          "<ul><li>Security smells in AI-generated Ansible roles</li><li>Evaluation of 16 AI models across 278 roles</li><li>CIS benchmark compliance for Apache Tomcat v10 and MongoDB v7</li><li>Security-guided prompts using an extended CO-STAR framework</li><li>Prevention during code generation without model retraining</li></ul>"
+        ]
+      ],
+      [
+        "View Preprint",
+        [
+          "<p><a href=\"https://arxiv.org/abs/2608.24962\" target=\"_blank\" rel=\"noopener\" class=\"btn\">View on arXiv</a></p>"
+        ]
+      ]
+    ]
+  },
+  "blog-projects/anvil/anvil.html": {
+    "title": "Project Anvil: Agentic Ansible Harness",
+    "badge": "Research Proof of Concept",
+    "facts": [
+      [
+        "Field",
+        [
+          "Infrastructure as Code / Agentic AI"
+        ]
+      ],
+      [
+        "Status",
+        [
+          "Under active development"
+        ]
+      ],
+      [
+        "Researcher",
+        [
+          "Pandu Ranga Reddy Konala"
+        ]
+      ],
+      [
+        "Research Context",
+        [
+          "PhD research, The University of Waikato"
+        ]
+      ],
+      [
+        "Current Platform",
+        [
+          "Ansible"
+        ]
+      ],
+      [
+        "Quality Framework",
+        [
+          "9 dimensions / 96 attributes"
+        ]
+      ]
+    ],
+    "sections": [
+      [
+        "Overview",
+        [
+          "<p>Project Anvil is a multi-agent harness for generating and remediating Ansible roles. It turns natural-language requirements into infrastructure code and repairs existing roles using policy-driven quality checks, deployment tests and compliance controls.</p>",
+          "<p>The project is an implementation artifact of PhD research at the University of Waikato on code quality and cyber security for infrastructure automation. It is a research proof of concept under active development.</p>"
+        ]
+      ],
+      [
+        "Core Capabilities",
+        [
+          "<ul><li>Generate Ansible roles from requirements, with iterative testing and repair.</li><li>Remediate existing roles by fixing lint and syntax issues, applying best practices and adding compliance controls.</li><li>Measure code quality across nine dimensions and 96 attributes, using configurable YAML policies and an Ansible Galaxy benchmark dataset.</li><li>Assess deployed roles using CIS-CAT Pro and manual control checks.</li></ul>"
+        ]
+      ],
+      [
+        "How It Works",
+        [
+          "<p>Generated and remediated roles move through lint, syntax, quality diagnostics, Docker deployment and live service checks. Failed checks trigger agent-driven repair loops informed by failure-specific skills and previously learned patterns.</p>",
+          "<p>A supervisor agent checks request feasibility, monitors the pipeline and produces a final run report. Quality weights, thresholds and compliance mappings are maintained as policies in the knowledge base.</p>"
+        ]
+      ],
+      [
+        "Current Scope",
+        [
+          "<p>The current implementation supports Ansible, MongoDB 7 Enterprise, HIPAA mappings and CIS Controls v8 across IG1, IG2 and IG3, with live CIS-CAT Pro assessment. Additional languages, technologies and regulatory frameworks are planned.</p>"
+        ]
+      ],
+      [
+        "View on GitHub",
+        [
+          "<p><a href=\"https://github.com/PanduKonala/Project-Anvil\" target=\"_blank\" rel=\"noopener\" class=\"btn\">View Project on GitHub</a></p>"
+        ]
+      ]
+    ]
+  }
+}
