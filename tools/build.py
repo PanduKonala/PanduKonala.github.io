@@ -223,7 +223,7 @@ def render_detail(rel, d):
 """
     out = NOIR / rel
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(shell(up=up, title=f"{strip_tags(d['title'])} · Pandu Konala",
+    out.write_text(shell(up=up, title=f"{strip_tags(d['title'])} · Dr. Pandu Konala",
                          desc=strip_tags(row["abs"]) if row else strip_tags(d["title"]),
                          body=body, page="detail", back=(back, backlabel)), encoding="utf-8")
     return rel, len(d["facts"]), len(d["sections"])
@@ -296,15 +296,15 @@ def build_index():
     <span class="mono">Associate Scientist &middot; The University of Waikato</span>
     <span class="tag">Scientist. Ethical Hacker. &amp; Much More.</span>
   </div>
-  <h1 class="big ink" id="nm">Pandu|Konala</h1>
+  <h1 class="big ink" id="nm">Dr.&nbsp;Pandu|Konala</h1>
 </div>
 
 <div class="doors">{door_html}
 </div>
 """
     (NOIR / "index.html").write_text(shell(
-        up="", title="Pandu Konala — Scientist. Ethical Hacker. & Much More.",
-        desc="Pandu Ranga Reddy Konala — Associate Scientist at the University of Waikato. "
+        up="", title="Dr. Pandu Konala — Scientist. Ethical Hacker. & Much More.",
+        desc="Dr. Pandu Ranga Reddy Konala — Associate Scientist at the University of Waikato. "
              "Infrastructure as Code security, supply-chain integrity and quantum software engineering.",
         body=body, page="home"), encoding="utf-8")
 
@@ -325,7 +325,7 @@ def build_list(fname, num, heading, lede, rows, count_label):
 </section>
 """
     (NOIR / fname).write_text(shell(
-        up="", title=f"{heading} · Pandu Konala", desc=strip_tags(lede), body=body,
+        up="", title=f"{heading} · Dr. Pandu Konala", desc=strip_tags(lede), body=body,
         page=fname.replace(".html", "")), encoding="utf-8")
 
 
@@ -346,10 +346,10 @@ def build_about():
 
 <section class="slab">
   <div class="panel about-grid rv">
-    <div class="shead"><span class="mono" style="color:var(--gold)">&sect; 01</span><span class="dash"></span><span class="mono">Pandu Ranga Reddy Konala</span><h2>Who</h2></div>
+    <div class="shead"><span class="mono" style="color:var(--gold)">&sect; 01</span><span class="dash"></span><span class="mono">Dr. Pandu Ranga Reddy Konala</span><h2>Who</h2></div>
 
     <figure>
-      <img src="assets/img/portrait.jpg" alt="Pandu Konala" width="400" height="400">
+      <img src="assets/img/portrait.jpg" alt="Dr. Pandu Ranga Reddy Konala" width="400" height="400">
       <figcaption class="mono" style="margin-top:10px">Hamilton, New Zealand</figcaption>
       <!-- View CV button disabled for now
       <p style="margin-top:20px"><a class="cv" href="assets/files/CV_Konala_Pandu_2026.pdf" target="_blank" rel="noopener">View CV</a></p>
@@ -378,8 +378,8 @@ def build_about():
 
 """
     (NOIR / "about.html").write_text(shell(
-        up="", title="About · Pandu Konala",
-        desc="Pandu Ranga Reddy Konala: research principles, education, certifications "
+        up="", title="About · Dr. Pandu Ranga Reddy Konala",
+        desc="Dr. Pandu Ranga Reddy Konala: research principles, education, certifications "
              "and professional experience.", body=body, page="about"), encoding="utf-8")
 
 
@@ -393,8 +393,8 @@ def build_404():
 </div>
 """
     (NOIR / "404.html").write_text(shell(
-        up="", title="404 · Pandu Konala",
-        desc="That page could not be found on Pandu Konala's site. Head back to the home page.",
+        up="", title="404 · Dr. Pandu Konala",
+        desc="That page could not be found on Dr. Pandu Konala's site. Head back to the home page.",
         body=body, hour="23", page="404"), encoding="utf-8")
 
 
