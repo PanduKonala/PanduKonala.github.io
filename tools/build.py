@@ -91,7 +91,7 @@ def shell(*, up, title, desc, body, hour=None, plate=False, page="", current="",
   <div class="links">
     <a href="https://github.com/PanduKonala" target="_blank" rel="noopener">GitHub</a>
     <a href="https://www.linkedin.com/in/pandu-konala-179064149/" target="_blank" rel="noopener">LinkedIn</a>
-    <a href="{up}assets/files/CV_Konala_Pandu_2026.pdf" target="_blank" rel="noopener">CV</a>
+    <!-- CV link disabled for now: <a href="{up}assets/files/CV_Konala_Pandu_2026.pdf" target="_blank" rel="noopener">CV</a> -->
   </div>
 </footer>
 </div>
@@ -351,7 +351,9 @@ def build_about():
     <figure>
       <img src="assets/img/portrait.jpg" alt="Pandu Konala" width="400" height="400">
       <figcaption class="mono" style="margin-top:10px">Hamilton, New Zealand</figcaption>
+      <!-- View CV button disabled for now
       <p style="margin-top:20px"><a class="cv" href="assets/files/CV_Konala_Pandu_2026.pdf" target="_blank" rel="noopener">View CV</a></p>
+      -->
       <p style="margin-top:14px"><a class="mono" style="color:var(--cyan);text-decoration:none"
         href="{d['cv_news']}" target="_blank" rel="noopener">Cyber Security Project at Waikato &rarr;</a></p>
     </figure>
@@ -378,7 +380,7 @@ def build_about():
     (NOIR / "about.html").write_text(shell(
         up="", title="About · Pandu Konala",
         desc="Pandu Ranga Reddy Konala: research principles, education, certifications "
-             "and professional experience. Full detail in the CV.", body=body, page="about"), encoding="utf-8")
+             "and professional experience.", body=body, page="about"), encoding="utf-8")
 
 
 def build_404():
